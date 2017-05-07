@@ -65,7 +65,7 @@ public class ImageProcessor {
 		return img;
 	}
 
-	public static void creatLilypondFile(String dirName,String outFileName){
+	/*public static void creatLilypondFile(String dirName,String outFileName){
 		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
 		
 		PrintWriter out = null;
@@ -157,7 +157,7 @@ public class ImageProcessor {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}		
-	} 
+	} */
 	public static void visualize(String dirName) {
 		//segment info
 		//note group
@@ -165,10 +165,10 @@ public class ImageProcessor {
 		//stave line
 		//	
 	}
-	public static void main(String[] args) {
+	/*public static void main(String[] args) {
 		creatLilypondFile("The Moment","a.ly");
-	}
-	public static Vector<Integer> getPinch(Segment segment,NoteGroup g){
+	}*/
+	/*public static Vector<Integer> getPinch(Segment segment,NoteGroup g){
 		Vector<Integer> pinchs = new Vector<>();
 		for(Point p:g.getNoteHeadLoc()){
 			int partid = g.getPartid();
@@ -201,9 +201,9 @@ public class ImageProcessor {
 			pinchs.add(pinch);
 		}
 		return pinchs;
-	}
+	}*/
 	
-	public static Vector<Integer> getDuration(Segment segment,NoteGroup g){
+	/*public static Vector<Integer> getDuration(Segment segment,NoteGroup g){
 		Vector<Integer> durations = new Vector<>();
 		//Mat out = segment.getImage();
 		if(g.isDown){
@@ -356,7 +356,7 @@ public class ImageProcessor {
 			
 		}
 		return durations;
-	}
+	}*/
 
 	public ImageProcessor() {
 		// image = Imgcodecs.imread("a.png");
@@ -413,7 +413,7 @@ public class ImageProcessor {
 		return template;
 	}
 
-	public static Vector<Point> getNoteHeadLoc(Segment segment) {
+	/*public static Vector<Point> getNoteHeadLoc(Segment segment) {
 		Mat template = Imgcodecs.imread("a.png");
 		Imgproc.resize(template, template, new Size(26, 22));
 		Imgproc.cvtColor(template, template, Imgproc.COLOR_RGB2GRAY);
@@ -432,9 +432,9 @@ public class ImageProcessor {
 		}
 		
 		return noteLoc;
-	}
+	}*/
 	
-	public static Vector<NoteGroup> getNoteGroup(Segment segment) {
+	/*public static Vector<NoteGroup> getNoteGroup(Segment segment) {
 		Vector<NoteGroup> groups = new Vector<>();
 		Vector<Point> noteLoc = getNoteHeadLoc(segment);
 		
@@ -472,7 +472,7 @@ public class ImageProcessor {
 					//imshow(src);
 					/*if(rect.width>310){
 						imshow(src);
-					}*/
+					}
 					Vector<Integer> stemLoc = findPeakY(src, false);
 					//imshow(src);
 					int firstStemLoc = stemLoc.get(0)+rect.x;
@@ -512,7 +512,7 @@ public class ImageProcessor {
 			}
 		}
 		return groups;
-	}
+	}*/
 
 	public static Vector<Mat> getSheets(String dirName) {
 		//to do: need some step to phase noise !!!
@@ -531,7 +531,7 @@ public class ImageProcessor {
 		return sheets;
 	}
 
-	public static Vector<Segment> getStaveSegment(Mat mat, int partNum){
+	/*public static Vector<Segment> getStaveSegment(Mat mat, int partNum){
 		// remove stave line and divide page into segment.
 		
 		Mat page = mat.clone();
@@ -610,18 +610,18 @@ public class ImageProcessor {
 			}
 			findPeakY(image, true);//remove bar line.
 			segments.add(new Segment(image,segmentMid-segmentStart,segLineLoc));
-		}*/
+		}
 
 		/*
 		 * for (int i = 0; i < lineLoc.size(); i++) {
 		 * System.out.print(lineLoc.get(i)+"    ");
 		 * System.out.println(spaceFiltered.get(i)); }
-		 */
+		 
 
 		// int linespace = lineLoc.get(temp.size()/2);
 
 		//return segments;
-	}
+	}*/
 
 	public static List<MatOfPoint> findContours(Mat mat) {
 		Mat temp = new Mat();
@@ -671,7 +671,7 @@ public class ImageProcessor {
 		return matchResult;
 	}
 
-	static Vector<Integer> convolve(Vector<Integer> Signal, Vector<Integer> kernel) {
+	/*static Vector<Integer> convolve(Vector<Integer> Signal, Vector<Integer> kernel) {
 		Vector<Integer> result = new Vector<>();
 		for (int n = 0; n < Signal.size() + kernel.size() - 1; n++) {
 			int kmin, kmax, k, i;
@@ -690,7 +690,7 @@ public class ImageProcessor {
 			}
 		}
 		return result;
-	}
+	}*/
 	
 	public static Vector<Integer> findPeakY(Mat mat,boolean flag) {
 		//to do: big arg problem, maybe can count length rather than projection.
