@@ -402,6 +402,16 @@ public class ImageProcessor {
 
 		return (int) (sum/circles.cols());
 	}*/
+	
+	public static Mat getTemplate(String fName, int width, int height) {
+		Mat template = Imgcodecs.imread(fName);
+		// ImageProcessor.imshow(template);
+		Imgproc.resize(template, template, new Size(width, height));
+		Imgproc.cvtColor(template, template, Imgproc.COLOR_RGB2GRAY);
+		Imgproc.threshold(template, template, 100, 255, Imgproc.THRESH_BINARY);
+
+		return template;
+	}
 
 	public static Vector<Point> getNoteHeadLoc(Segment segment) {
 		Mat template = Imgcodecs.imread("a.png");
@@ -409,7 +419,7 @@ public class ImageProcessor {
 		Imgproc.cvtColor(template, template, Imgproc.COLOR_RGB2GRAY);
 		Imgproc.threshold(template, template, 100, 255, Imgproc.THRESH_BINARY);
 		
-		Mat matchResult = templatematch(segment.getImage(), template);
+		Mat matchResult = templatematch(segment.getImage(), template,0.7);
 		
 		Vector<Point> noteLoc = new Vector<>();
 		for(int i=0;i<matchResult.rows();++i){
@@ -457,7 +467,7 @@ public class ImageProcessor {
 			Mat src = segment.getImage().submat(rect);
 			
 			if (src.cols() >= template.cols() && src.rows() >= template.rows()) {
-				Mat matchResult = templatematch(src, template);
+				Mat matchResult = templatematch(src, template,0.7);
 				if(Core.minMaxLoc(matchResult).maxVal>0.3){//rect is a note box.
 					//imshow(src);
 					/*if(rect.width>310){
@@ -621,12 +631,14 @@ public class ImageProcessor {
 		return contours;
 	}
 
-	public static Mat templatematch(Mat src, Mat template) {
+	public static Mat templatematch(Mat src, Mat template,double threshold) {
 		Mat matchResult = new Mat();
 		Imgproc.matchTemplate(src, template, matchResult, Imgproc.TM_CCOEFF_NORMED);
 		MinMaxLocResult maxResult = Core.minMaxLoc(matchResult);
 		double maxval = Core.minMaxLoc(matchResult).maxVal;
-		Imgproc.threshold(matchResult, matchResult, 0.7, 255, Imgproc.THRESH_BINARY);
+		//System.out.println(maxval);
+		//imshow(src);
+		Imgproc.threshold(matchResult, matchResult, threshold, 255, Imgproc.THRESH_BINARY);
 		
 		//remove the multiple match.
 		//Vector<Point> noteLoc = new Vector<>();
@@ -739,7 +751,7 @@ public class ImageProcessor {
 				}
 				if (vector.get(i - 1, 0)[0] > threshold) {// only catch the
 															// first pixel.
-					peakLoc.add(i);
+					peakLoc.add(i+1);//
 				}
 
 			} else {
@@ -754,12 +766,16 @@ public class ImageProcessor {
 }
 
 class Segment {
+	//segment loc in page
 	int segmentStart;
 	int segmentEnd;
+	
 	int noteHeadHight;
 	int partNum;
+	//part info
 	Vector<Integer> partMid;
 	int segmentMid;
+	
 	Mat image;
 	Vector<Integer> lineLoc;
 	public int getPartNum() {
