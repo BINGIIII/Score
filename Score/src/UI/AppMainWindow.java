@@ -1,61 +1,108 @@
 package UI;
 
-import javax.imageio.plugins.jpeg.JPEGHuffmanTable;
 import javax.swing.*;
+import javax.swing.colorchooser.ColorChooserComponentFactory;
+
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.util.logging.Logger;
 
 /**
  * Created by Bing on 4/25/17.
  */
-public class AppMainWindow extends JFrame{
-    private static JPanel mainPanel;
-    public static PdfPanel pdfPanel;
+public class AppMainWindow{
+	JFrame mainFrame;
+	JMenuBar menuBar;
+	
+    //private static JPanel mainPanel;
+    public static ImagePanel imagePanel;
     public  static TextPanel textPanel;
+    
+    public static void main(String[] args){
+    	EventQueue.invokeLater(new Runnable() {	
+			@Override
+			public void run() {
+				new AppMainWindow();//init the UI.
+			}
+		});
+    }
 
     public AppMainWindow(){
-    	super("Score Demo");
+    	Logger.getGlobal().info("==================AppInitStart\n");
+    	
+        mainFrame = new JFrame("Score Demo");
+        mainFrame.setLayout(new BorderLayout());
         try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException
-                | UnsupportedLookAndFeelException e) {
-            e.printStackTrace();
-        }
+			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+		} catch (ClassNotFoundException | InstantiationException | IllegalAccessException
+				| UnsupportedLookAndFeelException e) {
+			e.printStackTrace();
+		}
+        mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         
+        initMenuBar();
+        
+        mainFrame.setExtendedState(JFrame.MAXIMIZED_BOTH);
+        
+        JTabbedPane tabbedPane = new JTabbedPane();
 
-        JMenuBar menuBar = new JMenuBar();
-        JMenu fileMenu = new JMenu("File");
-        JMenuItem importMenuItem = new JMenuItem("Import");
-        importMenuItem.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                JFileChooser chooser = new JFileChooser();
-                chooser.setCurrentDirectory(new File("./"));
-                int result = chooser.showOpenDialog(AppMainWindow.this);
-                if(result == JFileChooser.APPROVE_OPTION){
-                }
-            }
-        });
-        fileMenu.add(importMenuItem);
+    	textPanel = new TextPanel();
+    	tabbedPane.addTab("TEXT", textPanel);
+    	
+    	imagePanel = new ImagePanel();
+    	tabbedPane.addTab("IMAGE", imagePanel);
+   
+    	mainFrame.add(tabbedPane);
+       
+        mainFrame.pack();
+        mainFrame.setVisible(true);
+    }
+    private void initMenuBar(){
+    	menuBar = new JMenuBar();
+    	
+        JMenu fileMenu = new JMenu("File");//file menu.
+        JMenuItem omxmlMenuItem = new JMenuItem("Open MusicXML...");
+        omxmlMenuItem.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				final JFileChooser fc = new JFileChooser();
+				fc.setCurrentDirectory(new File(System.getProperty("user.dir")));
+				int returnVal = fc.showOpenDialog(mainFrame);
+				if (returnVal == JFileChooser.APPROVE_OPTION) {
+		            File file = fc.getSelectedFile();
+		            textPanel.showText(file);
+		            Logger.getGlobal().info("Opening: " + file.getName() + ".\n");
+		        } else {
+		        	Logger.getGlobal().info("Open command cancelled by user.\n");
+		        }
+			}
+		});
+        JMenuItem oimgMenuItem = new JMenuItem("Open image...");
+        oimgMenuItem.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				final JFileChooser fc = new JFileChooser();
+				fc.setCurrentDirectory(new File(System.getProperty("user.dir")));
+				int returnVal = fc.showOpenDialog(mainFrame);
+				if (returnVal == JFileChooser.APPROVE_OPTION) {
+		            File file = fc.getSelectedFile();
+		            
+		            imagePanel.initAndShowUI(file);
+		            Logger.getGlobal().info("Opening: " + file.getName() + ".\n");
+		        } else {
+		        	Logger.getGlobal().info("Open command cancelled by user.\n");
+		        }
+			}
+		});
+        
+        fileMenu.add(oimgMenuItem);
+        fileMenu.add(omxmlMenuItem);
         menuBar.add(fileMenu);
-        setJMenuBar(menuBar);
-
-        //mainPanel = new JPanel(true);
-        //mainPanel.setBackground(Color.blue);
-
-        //textPanel = new TextPanel("a.txt");
-        pdfPanel = new PdfPanel("a.pdf");
-        //mainPanel.add(Panel);
-
-        //add(textPanel);
-        add(pdfPanel);
         
-        setLocationByPlatform(true);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        pack();
-        setVisible(true);
-
+        mainFrame.setJMenuBar(menuBar);
     }
 }

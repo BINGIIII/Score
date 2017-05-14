@@ -29,8 +29,13 @@ import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
 public class ImageProcessor {
-	//Vector<Mat> pages;
-
+	public static void main(String[] args){
+		Vector<Mat> sheets = getSheets("jianpu");
+		for(Mat m:sheets){
+			imshow(m);
+		}
+	}
+	
 	public static BufferedImage mat2image(Mat mat) {
 		BufferedImage img;
 		if (mat != null) {
