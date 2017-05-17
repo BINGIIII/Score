@@ -17,6 +17,8 @@ import org.opencv.core.Rect;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
+import UI.GlobleVariable;
+
 class PartMat {
 	Mat mat;
 	Vector<Integer> lineLoc;
@@ -51,6 +53,10 @@ public class Score {
 		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
 
 		File dir = new File("measures");
+		for (String fName : dir.list()) {
+			new File("output/" + fName).delete();
+		}
+		dir = new File("output");
 		for (String fName : dir.list()) {
 			new File("output/" + fName).delete();
 		}
@@ -138,7 +144,105 @@ public class Score {
 		}
 	}
 
+	public void convert2lilypond(String outName){
+		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+
+		File dir = new File("measures");
+		for (String fName : dir.list()) {
+			new File("output/" + fName).delete();
+		}
+		dir = new File("output");
+		for (String fName : dir.list()) {
+			new File("output/" + fName).delete();
+		}
+		
+		
+
+		//Score score = new Score(GlobleVariable.getScoreDir(), GlobleVariable.getPartNum());
+
+		PrintWriter out = null;
+
+		// File f = new File(filename);
+		try {
+			out = new PrintWriter(new FileWriter(outName));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		out.print("{ \\time 2/4 ");
+
+		for (Part part : getParts()) {
+			// System.out.println("===============part============");
+			// for(Measure measure:part.getMeasures()){
+			for (int i = 0; i < part.getMeasures().size(); ++i) {
+				// ImageProcessor.imshow(measure.getImage());
+				Measure measure = part.getMeasures().get(i);
+				Imgcodecs.imwrite("output/img" + part.id + (i + 1000) + ".png", measure.getImage());
+				for (BeamedNote group : measure.getNoteGroups()) {
+					for (Note note : group.getNotes()) {
+						// System.out.println(note.getPinchStep()+"
+						// "+note.getDuration());
+						int pinch = note.getPinchStep();
+						if (pinch > 0) {
+							int dotnum = pinch / 7 + 1;
+							int step = pinch % 7;
+							if(step==0){
+								dotnum--;
+							}
+							char c = 'c';
+							switch (step) {
+							case 1:
+								c = 'c';
+								break;
+							case 2:
+								c = 'd';
+								break;
+							case 3:
+								c = 'e';
+								break;
+							case 4:
+								c = 'f';
+								break;
+							case 5:
+								c = 'g';
+								break;
+							case 6:
+								c = 'a';
+								break;
+							case 0:
+								c = 'b';
+								break;
+
+							default:
+								break;
+							}
+							out.print(c);
+							for (int j = 0; j < dotnum; ++j) {
+								out.print('\'');
+							}
+							out.print(note.getDuration());
+							for(int j=0;j<note.dot;++j){
+								out.print('.'+" ");
+							}
+						} else {
+							out.print("r" + note.getDuration() + " ");
+						}
+						// System.out.println("-------[goup]--------");
+					}
+					out.print(" |");
+				}
+			}
+		}
+		out.print("}");
+		out.close();
+		try {
+			Runtime.getRuntime().exec("C:\\Program Files (x86)\\LilyPond\\usr\\bin\\lilypond a.ly");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
 	public Score(String dirName, int partNum) {
+		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
 		// divide score mat into part mat
 		parts = new Vector<>();
 
@@ -860,7 +964,7 @@ class BeamedNote {
 			for (int i = 0; i < headLoc.size(); ++i) {
 				pinch = getPinch(measureMat, new Point(headLoc.get(i).x + position.x, headLoc.get(i).y + position.y),
 						lineLoc);
-				System.out.println(pinch);
+				//System.out.println(pinch);
 				notes.add(new Note(durations.get(i), 0, pinch, 0));
 			}
 			break;

@@ -3,25 +3,120 @@ package OMR;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Vector;
 
 import javax.swing.SwingUtilities;
 
 import org.opencv.core.Core;
+import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
+import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
 public class ImageProcessor {
-	public static void main(String[] args){
+	
+	public static void main(String[] args) {
+		File dir = new File("output");
+		for (String fName : dir.list()) {
+			new File("output/" + fName).delete();
+		}
+		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
 		Vector<Mat> sheets = getSheets("jianpu");
-		for(Mat m:sheets){
-			imshow(m);
+		for(Mat mat:sheets){
+			Vector<Integer> peakLoc = new Vector<>();
+
+			Mat temp = mat.clone();
+			//Core.bitwise_not(mat, temp);
+
+			Mat vector = new Mat();
+			Core.reduce(temp, vector, 1, Core.REDUCE_AVG);
+
+			int threshold = 100;
+			double[] white = new double[1];
+			white[0] = 255;
+			
+			List<MatOfPoint> contours = ImageProcessor.findContours(mat);
+			contours.sort(new Comparator<MatOfPoint>() {
+
+				@Override
+				public int compare(MatOfPoint o1, MatOfPoint o2) {
+					Rect rect1 = Imgproc.boundingRect(o1);
+					Rect rect2 = Imgproc.boundingRect(o2);
+					if(Math.abs(rect1.y-rect2.y)<60){
+						return rect1.x-rect2.x;
+					}else {
+						return rect1.y-rect2.y;
+					}
+				}
+			});
+			
+			Imgproc.cvtColor(temp, temp, Imgproc.COLOR_GRAY2BGR);
+			for(MatOfPoint c:contours){
+				Rect rect = Imgproc.boundingRect(c);
+				Mat src = mat.submat(rect);
+				if(rect.height>=25&&rect.width>=10&&rect.height<=45&&rect.width<=45){
+					Mat note1 = ImageProcessor.getTemplate("template/1.png", rect.width,rect.height);
+					Mat matchResult = ImageProcessor.templatematch(src, note1, 0.3);
+					if (Core.minMaxLoc(matchResult).maxVal > 0.7) {
+						//Imgproc.rectangle(temp, rect.br(), rect.tl(), new Scalar(0,0,255));
+						System.out.print("1 ");
+						continue;
+					}
+					Mat note2 = ImageProcessor.getTemplate("template/2.png", rect.width,rect.height);
+					matchResult = ImageProcessor.templatematch(src, note2, 0.5);
+					if (Core.minMaxLoc(matchResult).maxVal > 0.7) {
+						///Imgproc.rectangle(temp, rect.br(), rect.tl(), new Scalar(0,0,255));
+						System.out.print("2 ");
+						continue;
+					}
+					Mat note3 = ImageProcessor.getTemplate("template/3.png", rect.width,rect.height);
+					matchResult = ImageProcessor.templatematch(src, note3, 0.5);
+					if (Core.minMaxLoc(matchResult).maxVal > 0.3) {
+						//Imgproc.rectangle(temp, rect.br(), rect.tl(), new Scalar(0,0,255));
+						System.out.print("3 ");
+						continue;
+					}
+					Mat note4 = ImageProcessor.getTemplate("template/4.png", rect.width,rect.height);
+					matchResult = ImageProcessor.templatematch(src, note4, 0.5);
+					if (Core.minMaxLoc(matchResult).maxVal > 0.7) {
+						//Imgproc.rectangle(temp, rect.br(), rect.tl(), new Scalar(0,0,255));
+						System.out.print("4 ");
+						continue;
+					}
+					Mat note5 = ImageProcessor.getTemplate("template/5.png", rect.width,rect.height);
+					matchResult = ImageProcessor.templatematch(src, note5, 0.5);
+					if (Core.minMaxLoc(matchResult).maxVal > 0.7) {
+						//Imgproc.rectangle(temp, rect.br(), rect.tl(), new Scalar(0,0,255));
+						System.out.print("5 ");
+						continue;
+					}
+					Mat note6 = ImageProcessor.getTemplate("template/6.png", rect.width,rect.height);
+					matchResult = ImageProcessor.templatematch(src, note6, 0.3);
+					if (Core.minMaxLoc(matchResult).maxVal > 0.7) {
+						//Imgproc.rectangle(temp, rect.br(), rect.tl(), new Scalar(0,0,255));
+						System.out.print("6 ");
+						continue;
+					}
+					Mat note7 = ImageProcessor.getTemplate("template/7.png", rect.width,rect.height);
+					matchResult = ImageProcessor.templatematch(src, note7, 0.5);
+					if (Core.minMaxLoc(matchResult).maxVal > 0.7) {
+						//Imgproc.rectangle(temp, rect.br(), rect.tl(), new Scalar(0,0,255));
+						System.out.print("7 ");
+						continue;
+					}
+					//Imgcodecs.imwrite("output/img"+i+++".png", mat.submat(rect));
+				}
+				
+			}
+			System.out.println();
+			//imshow(temp);
 		}
 	}
 	
@@ -59,12 +154,6 @@ public class ImageProcessor {
 		return img;
 	}
 
-	public ImageProcessor() {
-		// image = Imgcodecs.imread("a.png");
-		// Imgcodecs.imwrite("temp.png", image);
-		// new ImageViewer("temp.png");
-	}
-
 	public static void imshow(Mat image) {
 		SwingUtilities.invokeLater(new Runnable() {
 			@Override
@@ -95,7 +184,8 @@ public class ImageProcessor {
 		for (String s : fileList) {
 			Mat mat = Imgcodecs.imread(dirName + "/" + s);
 			Imgproc.cvtColor(mat, mat, Imgproc.COLOR_RGB2GRAY);
-			Imgproc.threshold(mat, mat, 100, 255, Imgproc.THRESH_BINARY);
+			//Imgproc.GaussianBlur(mat, mat, new Size(3,3),0);
+			Imgproc.threshold(mat, mat, 200, 255, Imgproc.THRESH_BINARY);
 			sheets.add(mat);
 		}
 		return sheets;
@@ -111,15 +201,12 @@ public class ImageProcessor {
 
 	public static Mat templatematch(Mat src, Mat template,double threshold) {
 		Mat matchResult = new Mat();
+		if(src.cols()<template.cols()||src.rows()<template.rows()){
+			matchResult = Mat.zeros(src.size(), CvType.CV_8UC1);
+		}else{
 		Imgproc.matchTemplate(src, template, matchResult, Imgproc.TM_CCOEFF_NORMED);
-		//MinMaxLocResult maxResult = Core.minMaxLoc(matchResult);
-		//double maxval = Core.minMaxLoc(matchResult).maxVal;
-		//System.out.println(maxval);
-		//imshow(src);
+		double max = Core.minMaxLoc(matchResult).maxVal;
 		Imgproc.threshold(matchResult, matchResult, threshold, 255, Imgproc.THRESH_BINARY);
-		
-		//remove the multiple match.
-		//Vector<Point> noteLoc = new Vector<>();
 		for(int i=0;i<matchResult.rows();++i){
 			for(int j=0;j<matchResult.cols();++j){ 
 				if (matchResult.get(i, j)[0]>0.3) {
@@ -135,16 +222,7 @@ public class ImageProcessor {
 				}
 				
 			}
-		}
-		// System.out.println("max : "+ max);
-		/*
-		 * for(int i=0;i<result.rows();++i){ for(int j=0;j<result.cols();++j){
-		 * //System.out.println(result.get(i, j)[0]); if(result.get(i,
-		 * j)[0]>0.6){ Imgproc.rectangle(src, new Point(j, i),new
-		 * Point(j+26,i+22), new Scalar(0,0,255)); }
-		 * //System.out.println(result.get(i, j)[0]); } }
-		 */
-		//imshow(src);
+		}}
 
 		return matchResult;
 	}
@@ -220,144 +298,4 @@ public class ImageProcessor {
 
 		return peakLoc;
 	}
-}
-
-class Segment {
-	//segment loc in page
-	int segmentStart;
-	int segmentEnd;
-	
-	int noteHeadHight;
-	int partNum;
-	//part info
-	Vector<Integer> partMid;
-	int segmentMid;
-	
-	Mat image;
-	Vector<Integer> lineLoc;
-	public int getPartNum() {
-		return partNum;
-	}
-
-
-	public void setPartNum(int partNum) {
-		this.partNum = partNum;
-	}
-
-
-	public Vector<Integer> getPartMid() {
-		return partMid;
-	}
-
-
-	public void setPartMid(Vector<Integer> partMid) {
-		this.partMid = partMid;
-	}
-
-
-	public Mat getImage() {
-		return image;
-	}
-	
-
-	public int getSegmentMid() {
-		return segmentMid;
-	}
-
-
-	public void setSegmentMid(int segmentMid) {
-		this.segmentMid = segmentMid;
-	}
-
-
-	public Vector<Integer> getLineLoc() {
-		return lineLoc;
-	}
-
-
-	public void setLineLoc(Vector<Integer> lineLoc) {
-		this.lineLoc = lineLoc;
-	}
-
-
-	public void setImage(Mat image) {
-		this.image = image;
-	}
-
-	public int getPartIdByY(int y){
-		int difMin = Math.abs(getPartMid().get(0) -y);
-		int partid = 0;
-		for(int i=1;i<getPartMid().size();++i){
-			if(Math.abs(getPartMid().get(i)-y)<difMin){
-				difMin = Math.abs(getPartMid().get(i)-y);
-				partid = i;
-			}
-			
-		}
-		return partid;
-	}
-	public Segment(Mat image,int mid,Vector<Integer> loc,int noteHeadHight,int partNum,int start,int end) {
-		segmentStart = start;
-		segmentEnd = end;
-		this.partNum = partNum;
-		this.noteHeadHight = noteHeadHight;
-		this.image = image;
-		segmentMid = mid;
-		lineLoc = loc;
-		partMid  = new Vector<>();
-		for(int i=0;i<loc.size();i+=5){
-			partMid.add((loc.get(i+1)+loc.get(i+2))/2);
-		}
-		// this.lineLoc = lineLoc;
-	}
-}
-class NoteGroup{
-	int partid;
-	boolean isSingle;
-	boolean isDown;
-	//int noteNum;
-	Vector<Point> noteHeadLoc;//sort by x index.
-	Rect pos;
-	
-	
-	
-	public NoteGroup(int partid, boolean isSingle, boolean isDown, Vector<Point> noteHeadLoc, Rect pos) {
-		super();
-		this.partid = partid;
-		this.isSingle = isSingle;
-		this.isDown = isDown;
-		this.noteHeadLoc = noteHeadLoc;
-		this.pos = pos;
-	}
-	public int getPartid() {
-		return partid;
-	}
-	public void setPartid(int partid) {
-		this.partid = partid;
-	}
-	public boolean isSingle() {
-		return isSingle;
-	}
-	public void setSingle(boolean isSingle) {
-		this.isSingle = isSingle;
-	}
-	public boolean isDown() {
-		return isDown;
-	}
-	public void setDown(boolean isDown) {
-		this.isDown = isDown;
-	}
-	public Vector<Point> getNoteHeadLoc() {
-		return noteHeadLoc;
-	}
-	public void setNoteHeadLoc(Vector<Point> noteHeadLoc) {
-		this.noteHeadLoc = noteHeadLoc;
-	}
-	public Rect getPos() {
-		return pos;
-	}
-	public void setPos(Rect pos) {
-		this.pos = pos;
-	}
-	
 }
