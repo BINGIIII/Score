@@ -5,6 +5,7 @@ import javax.swing.*;
 import javax.swing.colorchooser.ColorChooserComponentFactory;
 
 import OMR.Score;
+import logic.XML2lyCompiler;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -24,6 +25,7 @@ public class AppMainWindow{
 	File lilypondFile;
 	LyEditor lyEditor;
 	ScorePanel scorePanel;
+	TextPanel xmlPanel;
 	
     //private static JPanel mainPanel;
     //public static ImagePanel imagePanel;
@@ -75,6 +77,7 @@ public class AppMainWindow{
         
         scorePanel = new ScorePanel(null);
         lyEditor = new LyEditor();
+        xmlPanel = new TextPanel();
     }
     private void initMenuBar(){
     	menuBar = new JMenuBar();
@@ -90,6 +93,11 @@ public class AppMainWindow{
 				int returnVal = fc.showOpenDialog(mainFrame);
 				if (returnVal == JFileChooser.APPROVE_OPTION) {
 		            File file = fc.getSelectedFile();
+		            GlobleVariable.setXmlPath(file.getAbsolutePath());
+		            mainPanel.removeAll();
+		            mainPanel.add(xmlPanel);
+		            xmlPanel.setText(file);
+		            mainPanel.updateUI();
 		            //textPanel.showText(file);
 		            Logger.getGlobal().info("Opening: " + file.getName() + ".\n");
 		        } else {
@@ -133,13 +141,11 @@ public class AppMainWindow{
 				int returnVal = fc.showOpenDialog(mainFrame);
 				if (returnVal == JFileChooser.APPROVE_OPTION) {
 		            lilypondFile = fc.getSelectedFile();
-		            if(lyEditor!=null){
-		            	
-		            	lyEditor.setFile(lilypondFile);
-		            }
+		            mainPanel.removeAll();
+		            mainPanel.add(lyEditor);
+		            lyEditor.setFile(lilypondFile);
+		            mainPanel.updateUI();
 		            Logger.getGlobal().info("Opening: " + lilypondFile.getName() + ".\n");
-		        } else {
-		        	Logger.getGlobal().info("Open command cancelled by user.\n");
 		        }
 			}
 		});
@@ -180,6 +186,19 @@ public class AppMainWindow{
 			}
 		});
         JMenuItem xml2ly = new JMenuItem("Convert MusicXML to Lilypond");
+        xml2ly.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if(GlobleVariable.getXmlPath()!=null){
+					new XML2lyCompiler().parser(GlobleVariable.getXmlPath(), "y.ly");
+					lyEditor.setFile(new File("y.ly"));
+					mainPanel.removeAll();
+					mainPanel.add(lyEditor);
+					mainPanel.updateUI();
+				}
+			}
+		});
         JMenuItem ly2stave = new JMenuItem("Engrave ly to Stave");
         JMenuItem ly2jianpu = new JMenuItem("Engrave ly to Jianpu");
         JMenuItem ly2midi = new JMenuItem("Produce MIDI From ly");
@@ -223,6 +242,19 @@ public class AppMainWindow{
 			}
 		});
         viewMenu.add(showScore);
+        
+        JMenuItem xmlView = new JMenuItem("Show MusicXML View");
+        xmlView.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				mainPanel.removeAll();
+				mainPanel.add(xmlPanel);
+				mainPanel.updateUI();
+				Logger.getGlobal().info("show xmlPanel\n");
+			}
+		});
+        viewMenu.add(xmlView);
         
         menuBar.add(viewMenu);
         //==============================================================Help menu

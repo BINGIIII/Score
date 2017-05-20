@@ -14,6 +14,7 @@ import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.charset.Charset;
 import java.util.Scanner;
 import java.util.logging.Logger;
 
@@ -25,6 +26,7 @@ public class LyEditor extends JPanel {
 	ImagePanel lyImage;
 	
 	public void setFile(File file){
+		lyImage.clear();
 		lyText.setText(file); 
 	}
 	

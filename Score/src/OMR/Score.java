@@ -14,6 +14,7 @@ import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
+import org.opencv.core.Scalar;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
@@ -22,9 +23,11 @@ import UI.GlobleVariable;
 class PartMat {
 	Mat mat;
 	Vector<Integer> lineLoc;
+	int yloc;
 
-	public PartMat(Mat mat, Vector<Integer> lineLoc) {
+	public PartMat(Mat mat, Vector<Integer> lineLoc,int yloc) {
 		super();
+		this.yloc =yloc;
 		this.mat = mat;
 		this.lineLoc = lineLoc;
 	}
@@ -44,117 +47,23 @@ class PartMat {
 	public void setLineLoc(Vector<Integer> lineLoc) {
 		this.lineLoc = lineLoc;
 	}
+
+	public int getYloc() {
+		return yloc;
+	}
+
+	public void setYloc(int yloc) {
+		this.yloc = yloc;
+	}
 }
 
 public class Score {
 	Vector<Part> parts;
 
-	public static void main(String[] args) {
-		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
-
-		File dir = new File("measures");
-		for (String fName : dir.list()) {
-			new File("output/" + fName).delete();
-		}
-		dir = new File("output");
-		for (String fName : dir.list()) {
-			new File("output/" + fName).delete();
-		}
-
-		Score score = new Score("Echigo-Jishi", 1);
-
-		PrintWriter out = null;
-
-		// File f = new File(filename);
-		try {
-			out = new PrintWriter(new FileWriter("a.ly"));
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		out.print("{ \\time 2/4 ");
-
-		for (Part part : score.getParts()) {
-			// System.out.println("===============part============");
-			// for(Measure measure:part.getMeasures()){
-			for (int i = 0; i < part.getMeasures().size(); ++i) {
-				// ImageProcessor.imshow(measure.getImage());
-				Measure measure = part.getMeasures().get(i);
-				Imgcodecs.imwrite("output/img" + part.id + (i + 1000) + ".png", measure.getImage());
-				for (BeamedNote group : measure.getNoteGroups()) {
-					for (Note note : group.getNotes()) {
-						// System.out.println(note.getPinchStep()+"
-						// "+note.getDuration());
-						int pinch = note.getPinchStep();
-						if (pinch > 0) {
-							int dotnum = pinch / 7 + 1;
-							int step = pinch % 7;
-							if(step==0){
-								dotnum--;
-							}
-							char c = 'c';
-							switch (step) {
-							case 1:
-								c = 'c';
-								break;
-							case 2:
-								c = 'd';
-								break;
-							case 3:
-								c = 'e';
-								break;
-							case 4:
-								c = 'f';
-								break;
-							case 5:
-								c = 'g';
-								break;
-							case 6:
-								c = 'a';
-								break;
-							case 0:
-								c = 'b';
-								break;
-
-							default:
-								break;
-							}
-							out.print(c);
-							for (int j = 0; j < dotnum; ++j) {
-								out.print('\'');
-							}
-							out.print(note.getDuration());
-							for(int j=0;j<note.dot;++j){
-								out.print('.'+" ");
-							}
-						} else {
-							out.print("r" + note.getDuration() + " ");
-						}
-						// System.out.println("-------[goup]--------");
-					}
-					out.print(" |");
-				}
-			}
-		}
-		out.print("}");
-		out.close();
-		try {
-			Runtime.getRuntime().exec("C:\\Program Files (x86)\\LilyPond\\usr\\bin\\lilypond a.ly");
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-
 	public void convert2lilypond(String outName){
 		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
 
-		File dir = new File("measures");
-		for (String fName : dir.list()) {
-			new File("output/" + fName).delete();
-		}
-		dir = new File("output");
-		for (String fName : dir.list()) {
-			new File("output/" + fName).delete();
-		}
+		
 		
 		
 
@@ -168,20 +77,24 @@ public class Score {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		out.print("{ \\time 2/4 ");
-
+		out.print("{ << ");
+		
 		for (Part part : getParts()) {
+			out.print("\\new Staff{ \n");
+			
+				out.print("\\clef treble ");
+				out.print("\\time 2/4 ");
 			// System.out.println("===============part============");
 			// for(Measure measure:part.getMeasures()){
 			for (int i = 0; i < part.getMeasures().size(); ++i) {
 				// ImageProcessor.imshow(measure.getImage());
 				Measure measure = part.getMeasures().get(i);
-				Imgcodecs.imwrite("output/img" + part.id + (i + 1000) + ".png", measure.getImage());
 				for (BeamedNote group : measure.getNoteGroups()) {
 					for (Note note : group.getNotes()) {
 						// System.out.println(note.getPinchStep()+"
 						// "+note.getDuration());
 						int pinch = note.getPinchStep();
+						
 						if (pinch > 0) {
 							int dotnum = pinch / 7 + 1;
 							int step = pinch % 7;
@@ -231,8 +144,9 @@ public class Score {
 					out.print(" |");
 				}
 			}
+			out.println("}");
 		}
-		out.print("}");
+		out.print(">> }");
 		out.close();
 		try {
 			Runtime.getRuntime().exec("C:\\Program Files (x86)\\LilyPond\\usr\\bin\\lilypond a.ly");
@@ -243,6 +157,15 @@ public class Score {
 	
 	public Score(String dirName, int partNum) {
 		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+		
+		File dir = new File("measures");
+		for (String fName : dir.list()) {
+			new File("measures/" + fName).delete();
+		}
+		dir = new File("output");
+		for (String fName : dir.list()) {
+			new File("output/" + fName).delete();
+		}
 		// divide score mat into part mat
 		parts = new Vector<>();
 
@@ -252,11 +175,16 @@ public class Score {
 		for (int i = 0; i < partNum; ++i) {
 			firstPart[i] = true;
 		}
+		
 		for (Mat page : sheets) {
+			
+			
 			Vector<Vector<PartMat>> partArray = getPart(page, partNum);
+			Mat out = page.clone();
+			Imgproc.cvtColor(out, out, Imgproc.COLOR_GRAY2BGR);
 			for (int k = 0; k < partNum; ++k) {
 				//
-				Part part = new Part(partArray.get(k).get(0).getMat(), partArray.get(k).get(0).getLineLoc(), k);
+				Part part = new Part(partArray.get(k).get(0).getMat(), partArray.get(k).get(0).getLineLoc(), k,out,partArray.get(k).get(0).getYloc());
 				if (firstPart[k]) {
 					parts.add(part);
 					firstPart[k] = false;
@@ -265,9 +193,11 @@ public class Score {
 				}
 				for (int i = 1; i < partArray.get(k).size(); ++i) {
 					parts.get(k)
-							.merge(new Part(partArray.get(k).get(i).getMat(), partArray.get(k).get(i).getLineLoc(), k));
+							.merge(new Part(partArray.get(k).get(i).getMat(), partArray.get(k).get(i).getLineLoc(), k,out,partArray.get(k).get(i).getYloc()));
 				}
 			}
+			Imgcodecs.imwrite("output/img"+page.hashCode()+".png",out);
+			
 		}
 	}
 
@@ -280,7 +210,7 @@ public class Score {
 			partArray.add(new Vector<>());
 		}
 
-		Mat page = pageMat.clone();// not change the source mat
+		Mat page = pageMat;// not change the source mat
 
 		Vector<Integer> lineLoc = ImageProcessor.findPeaks(page);// array of
 																	// index.
@@ -315,7 +245,7 @@ public class Score {
 			}
 			// ImageProcessor.imshow(partMat);
 			// System.out.println(i);
-			partArray.get(i % partNum).add(new PartMat(partMat, localLineLocs));
+			partArray.get(i % partNum).add(new PartMat(partMat, localLineLocs,divider.get(i)));
 		}
 		return partArray;
 	}
@@ -355,7 +285,8 @@ class Part {
 		measures.addAll(part.getMeasures());
 	}
 
-	public Part(Mat partMat, Vector<Integer> lineLoc, int id) {
+	public Part(Mat partMat, Vector<Integer> lineLoc, int id,Mat sheet,int y) {
+		//should pass sheet mat and part mat location.
 		// divide part mat into measure mat.
 		// need to find bar line first.
 
@@ -363,8 +294,42 @@ class Part {
 		// Imgproc.cvtColor(out, out, Imgproc.COLOR_GRAY2BGR);
 		this.id = id;
 		measures = new Vector<>();
-
-		List<MatOfPoint> contours = ImageProcessor.findContours(partMat);
+		
+		
+		
+		Vector<Integer> barLineLoc = new Vector<>();
+		//ImageProcessor.imshow(partMat);
+		for(int i=0;i<partMat.cols();++i){
+			boolean flag = true;
+			for(int j=lineLoc.get(0)+5;j<lineLoc.get(4)-5;++j){
+				if(partMat.get(j, i)[0]>0.3){//white
+					flag = false;
+					break;
+				}
+				
+			}
+			if(flag){//remove stem.
+				int left = i-30>0?i-30:0;
+				if(i==1322){
+					System.out.println();;
+				}
+				int width = 60;
+				if(left==0){
+					continue;
+					//width = 30;
+				}
+				if(partMat.cols()<left+width){
+					continue;
+				}
+				//ImageProcessor.imshow(partMat.submat(new Rect(left, 0, width, partMat.rows())));
+				Vector<Point> half = BeamedNote.getNoteHeadLoc(partMat, new Rect(left, lineLoc.get(0)-60, width, 200), "template/half.png");
+				Vector<Point> quarter = BeamedNote.getNoteHeadLoc(partMat,new Rect(left, lineLoc.get(0)-60, width, 200), "template/quarter.png");
+				if(half.size()==0&&quarter.size()==0){
+					barLineLoc.add(i);
+				}
+			}
+		}
+		/*List<MatOfPoint> contours = ImageProcessor.findContours(partMat);
 		contours.sort(new Comparator<MatOfPoint>() {
 
 			@Override
@@ -417,7 +382,7 @@ class Part {
 					}
 					break;
 				}
-			}
+			}*/
 
 			/*
 			 * if (box.width < 10 && box.height > 50) {//stand alone bar line.
@@ -441,15 +406,17 @@ class Part {
 			 * if(Math.abs(p.x-m)<20){ flag = true; } } if(!flag){
 			 * barLineLoc.add(box.x+m); } break; } } }
 			 */
-		}
+		//}
 		Collections.sort(barLineLoc);
 		for (int i = 0; i < barLineLoc.size(); ++i) {// remove double bar line
+			
 			if (i != 0 && Math.abs(barLineLoc.get(i) - barLineLoc.get(i - 1)) < 40) {
 				barLineLoc.remove(i);
+				--i;
 			} else {
-				// Imgproc.line(out, new Point(barLineLoc.get(i),0), new
-				// Point(barLineLoc.get(i),partMat.cols()), new
-				// Scalar(0,0,255));
+				//System.out.println(barLineLoc.get(i));
+				Imgproc.line(sheet, new Point(barLineLoc.get(i),y) ,new Point(barLineLoc.get(i),y+200), new Scalar(0,255,0), 5);
+				//ImageProcessor.imshow(sheet);
 			}
 		}
 		for (int i = 0; i < barLineLoc.size() - 1; ++i) {
@@ -457,8 +424,8 @@ class Part {
 			// ImageProcessor.imshow(measureMat);
 			// Imgcodecs.imwrite("output/img"+partMat.hashCode()+i+contours.hashCode()+".png",
 			// measureMat);
-			measures.add(new Measure(measureMat, lineLoc));
-			Imgcodecs.imwrite("measures/img"+id+partMat.hashCode()+i+contours.hashCode()+".png", measureMat);
+			measures.add(new Measure(measureMat, lineLoc,sheet, barLineLoc.get(i) + 10,y));
+			Imgcodecs.imwrite("measures/img"+id+partMat.hashCode()+i+".png", measureMat);
 		}
 		// ImageProcessor.imshow(out);
 
@@ -480,7 +447,8 @@ class Measure {
 	int clefLine;
 	Vector<BeamedNote> groups;
 
-	public Measure(Mat measureImage, Vector<Integer> lineLocs) {
+	public Measure(Mat measureImage, Vector<Integer> lineLocs,Mat sheet,int x,int y) {
+		//should pass:measure mat location in sheet,sheet id or sheet mat
 		image = measureImage;
 		// ImageProcessor.imshow(measureImage);
 		groups = new Vector<>();
@@ -495,8 +463,8 @@ class Measure {
 		});
 		// Imgproc.cvtColor(measureImage, measureImage, Imgproc.COLOR_GRAY2BGR);
 		// int count = 0;
-		// Mat out = measureImage.clone();
-		// Imgproc.cvtColor(out, out, Imgproc.COLOR_GRAY2BGR);
+		Mat out = sheet;
+		//Imgproc.cvtColor(out, out, Imgproc.COLOR_GRAY2BGR);
 		// for(int i:lineLocs){
 		// Imgproc.line(out, new Point(0,i),new Point(out.cols(),i), new
 		// Scalar(0,0,255));
@@ -513,47 +481,13 @@ class Measure {
 				Mat src = measureImage.submat(rect);
 				// ImageProcessor.imshow(src);
 				// ---------------------------------------------			
-				if (src.cols() >= 26 && src.rows() >= 22) {//notes
-					Mat quarterNote = ImageProcessor.getTemplate("template/quarter.png", 26, 22);
-					Mat matchResult = ImageProcessor.templatematch(src, quarterNote, 0.7);
-					if (Core.minMaxLoc(matchResult).maxVal > 0.7) {
-						// note
-						
-						groups.add(new BeamedNote(measureImage, rect, 0, lineLocs));
-						
-						continue;
-					}
-					// ---------------------------------------------
-					Mat halfNote = ImageProcessor.getTemplate("template/half.png", 26, 22);
-					matchResult = ImageProcessor.templatematch(src, halfNote, 0.55);
-					if (Core.minMaxLoc(matchResult).maxVal > 0.7) {
-						// note
-						//Mat out = measureImage.clone();
-						//Imgproc.cvtColor(out, out, Imgproc.COLOR_GRAY2BGR);
-						//Imgproc.rectangle(out, rect.tl(), rect.br(), new Scalar(0,0,255));
-						//ImageProcessor.imshow(out);
-						
-						groups.add(new BeamedNote(measureImage, rect, 2, lineLocs));
-						continue;
-					}
-					// ---------------------------------------------
-					Mat wholeNote = ImageProcessor.getTemplate("template/whole.png", 26, 22);
-					matchResult = ImageProcessor.templatematch(src, wholeNote, 0.6);
-					if (Core.minMaxLoc(matchResult).maxVal > 0.7) {
-						// note
-						/*Mat out = measureImage.clone();
-						Imgproc.cvtColor(out, out, Imgproc.COLOR_GRAY2BGR);
-						Imgproc.rectangle(out, rect.tl(), rect.br(), new Scalar(0,0,255));
-						ImageProcessor.imshow(out);*/
-						groups.add(new BeamedNote(measureImage, rect, 1, lineLocs));
-						continue;
-					}
-				}
+				
 				// ---------------------------------------------
 				if (src.cols() >= 40 && src.rows() >= 100) {
 					Mat gClef = ImageProcessor.getTemplate("template/g.png", rect.width, rect.height);
 					Mat matchResult = ImageProcessor.templatematch(src, gClef, 0.4);// 0.44
 					if (Core.minMaxLoc(matchResult).maxVal > 0.7) {
+						Imgproc.rectangle(out, new Point(rect.x+x, rect.y+y),new Point(rect.x+x+rect.width, rect.y+y+rect.height), new Scalar(255,0,0));
 						// g clef
 						// Imgproc.rectangle(out, rect.tl(), rect.br(), new
 						// Scalar(0,255,255));
@@ -565,8 +499,9 @@ class Measure {
 				// ---------------------------------------------
 				if (src.cols() >= 30 && src.rows() >= 50) {
 					Mat fClef = ImageProcessor.getTemplate("template/f.png", rect.width, rect.height);
-					Mat matchResult = ImageProcessor.templatematch(src, fClef, 0.3);
+					Mat matchResult = ImageProcessor.templatematch(src, fClef, 0.4);
 					if (Core.minMaxLoc(matchResult).maxVal > 0.7) {
+						Imgproc.rectangle(out,new Point(rect.x+x, rect.y+y),new Point(rect.x+x+rect.width, rect.y+y+rect.height), new Scalar(255,0,0));
 						// f clef
 						// Imgproc.rectangle(out, rect.tl(), rect.br(), new
 						// Scalar(255,0,255));
@@ -575,11 +510,44 @@ class Measure {
 						continue;
 					}
 				}
+				
+				if (src.cols() >= 26 && src.rows() >= 22) {//notes
+					Mat matchResult = null;
+					if(src.rows()>60){
+					Mat quarterNote = ImageProcessor.getTemplate("template/quarter.png", 26, 22);
+					matchResult = ImageProcessor.templatematch(src, quarterNote, 0.55);
+					if (Core.minMaxLoc(matchResult).maxVal > 0.55) {
+						// note
+						Imgproc.rectangle(out, new Point(rect.x+x, rect.y+y),new Point(rect.x+x+rect.width, rect.y+y+rect.height), new Scalar(0,0,255));
+						groups.add(new BeamedNote(measureImage, rect, 0, lineLocs,sheet,x,y));
+						
+						continue;
+					}
+					// ---------------------------------------------
+					Mat halfNote = ImageProcessor.getTemplate("template/half.png", 26, 22);
+					matchResult = ImageProcessor.templatematch(src, halfNote, 0.45);
+					if (Core.minMaxLoc(matchResult).maxVal > 0.7) {
+						// note
+						Imgproc.rectangle(out, new Point(rect.x+x, rect.y+y),new Point(rect.x+x+rect.width, rect.y+y+rect.height), new Scalar(0,0,255));
+						groups.add(new BeamedNote(measureImage, rect, 2, lineLocs,sheet,x,y));
+						continue;
+					}}
+					// ---------------------------------------------
+					Mat wholeNote = ImageProcessor.getTemplate("template/whole.png", 26, 22);
+					matchResult = ImageProcessor.templatematch(src, wholeNote, 0.4);
+					if (Core.minMaxLoc(matchResult).maxVal > 0.7) {
+						// note
+						Imgproc.rectangle(out, new Point(rect.x+x, rect.y+y),new Point(rect.x+x+rect.width, rect.y+y+rect.height), new Scalar(0,0,255));
+						groups.add(new BeamedNote(measureImage, rect, 1, lineLocs,sheet,x,y));
+						continue;
+					}
+				}
 				// ---------------------------------------------21 58
 				if (src.cols() >= 12 && src.rows() >= 45) {// give a min size.
 					Mat sharp = ImageProcessor.getTemplate("template/sharp.png", rect.width, rect.height);
 					Mat matchResult = ImageProcessor.templatematch(src, sharp, 0.4);
-					if (Core.minMaxLoc(matchResult).maxVal > 0.7) {
+					if (Core.minMaxLoc(matchResult).maxVal > 0.55) {
+						Imgproc.rectangle(out, new Point(rect.x+x, rect.y+y),new Point(rect.x+x+rect.width, rect.y+y+rect.height), new Scalar(0,255,0));
 						// sharp
 						// Imgproc.rectangle(out, rect.tl(), rect.br(), new
 						// Scalar(255,255,0));
@@ -591,6 +559,7 @@ class Measure {
 					matchResult = ImageProcessor.templatematch(src, flat, 0.15);
 					// System.out.println(max);
 					if (Core.minMaxLoc(matchResult).maxVal > 0.7) {
+						Imgproc.rectangle(out, new Point(rect.x+x, rect.y+y),new Point(rect.x+x+rect.width, rect.y+y+rect.height), new Scalar(0,255,0));
 						// flat
 						// Imgproc.rectangle(out, rect.tl(), rect.br(), new
 						// Scalar(0,146,255));
@@ -601,6 +570,7 @@ class Measure {
 					Mat natural = ImageProcessor.getTemplate("template/natural.png", rect.width, rect.height);
 					matchResult = ImageProcessor.templatematch(src, natural, 0.25);
 					if (Core.minMaxLoc(matchResult).maxVal > 0.7) {
+						Imgproc.rectangle(out, new Point(rect.x+x, rect.y+y),new Point(rect.x+x+rect.width, rect.y+y+rect.height), new Scalar(0,255,0));
 						// natural
 						// Imgproc.rectangle(out, rect.tl(), rect.br(), new
 						// Scalar(0,146,255));
@@ -611,10 +581,11 @@ class Measure {
 					Mat qurterRest = ImageProcessor.getTemplate("template/quarterrest.png", rect.width, rect.height);
 					Mat matchResult = ImageProcessor.templatematch(src, qurterRest, 0.3);
 					if (Core.minMaxLoc(matchResult).maxVal > 0.7) {
+						Imgproc.rectangle(out, new Point(rect.x+x, rect.y+y),new Point(rect.x+x+rect.width, rect.y+y+rect.height), new Scalar(255,255,0));
 						// 4rest
 						// Imgproc.rectangle(out, rect.tl(), rect.br(), new
 						// Scalar(0,255,0));
-						groups.add(new BeamedNote(src, rect, -4, lineLocs));
+						groups.add(new BeamedNote(src, rect, -4, lineLocs,null,0,0));
 						continue;
 					}
 				}
@@ -622,10 +593,11 @@ class Measure {
 					Mat rest8 = ImageProcessor.getTemplate("template/8rest.png", rect.width, rect.height);
 					Mat matchResult = ImageProcessor.templatematch(src, rest8, 0.5);
 					if (Core.minMaxLoc(matchResult).maxVal > 0.7) {
+						Imgproc.rectangle(out, new Point(rect.x+x, rect.y+y),new Point(rect.x+x+rect.width, rect.y+y+rect.height), new Scalar(255,255,0));
 						// 8rest
 						// Imgproc.rectangle(out, rect.tl(), rect.br(), new
 						// Scalar(255,255,0));
-						groups.add(new BeamedNote(src, rect, -8, lineLocs));
+						groups.add(new BeamedNote(src, rect, -8, lineLocs,null,0,0));
 						continue;
 					}
 				}
@@ -633,10 +605,11 @@ class Measure {
 					Mat rest16 = ImageProcessor.getTemplate("template/16rest.png", rect.width, rect.height);
 					Mat matchResult = ImageProcessor.templatematch(src, rest16, 0.3);
 					if (Core.minMaxLoc(matchResult).maxVal > 0.7) {
+						Imgproc.rectangle(out, new Point(rect.x+x, rect.y+y),new Point(rect.x+x+rect.width, rect.y+y+rect.height), new Scalar(255,255,0));
 						// 16rest
 						// Imgproc.rectangle(out, rect.tl(), rect.br(), new
 						// Scalar(30,190,165));
-						groups.add(new BeamedNote(src, rect, -16, lineLocs));
+						groups.add(new BeamedNote(src, rect, -16, lineLocs,null,0,0));
 						continue;
 					}
 				}
@@ -644,10 +617,11 @@ class Measure {
 					Mat rest32 = ImageProcessor.getTemplate("template/32rest.png", rect.width, rect.height);
 					Mat matchResult = ImageProcessor.templatematch(src, rest32, 0.3);
 					if (Core.minMaxLoc(matchResult).maxVal > 0.7) {
+						Imgproc.rectangle(out, new Point(rect.x+x, rect.y+y),new Point(rect.x+x+rect.width, rect.y+y+rect.height), new Scalar(255,255,0));
 						// 32rest
 						// Imgproc.rectangle(out, rect.tl(), rect.br(), new
 						// Scalar(24,147,230));
-						groups.add(new BeamedNote(src, rect, -32, lineLocs));
+						groups.add(new BeamedNote(src, rect, -32, lineLocs,null,0,0));
 						continue;
 					}
 				}
@@ -657,6 +631,7 @@ class Measure {
 							rect.height);
 					Mat matchResult = ImageProcessor.templatematch(src, wholeHalfRest, 0.98);
 					if (Core.minMaxLoc(matchResult).maxVal > 0.7) {
+						Imgproc.rectangle(out, new Point(rect.x+x, rect.y+y),new Point(rect.x+x+rect.width, rect.y+y+rect.height), new Scalar(255,255,0));
 						// whole rest
 						// Imgproc.rectangle(out, rect.tl(), rect.br(), new
 						// Scalar(0,0,255));
@@ -670,17 +645,24 @@ class Measure {
 					}
 				}
 
+				if(src.cols()<12&&src.rows()<12){
+					//dot
+					Imgproc.rectangle(out, new Point(rect.x+x, rect.y+y),new Point(rect.x+x+rect.width, rect.y+y+rect.height), new Scalar(255,255,0),3);
+					if(!groups.isEmpty()){
+						BeamedNote beamedNote = groups.get(groups.size()-1);
+						Vector<Note> notes = beamedNote.getNotes();
+					}
+				}
 				// something else, skip
 				;
 
-				// Imgproc.rectangle(measureImage, rect.tl(), rect.br(), new
-				// Scalar(0,0,255));
+				//Imgproc.rectangle(out, rect.tl(), rect.br(), new Scalar(0,0,255));
 				// count++;
 			}
 		}
 		// Imgproc.putText(measureImage, "num of box: "+count, new
 		// Point(40,40),Core.FONT_HERSHEY_PLAIN, 1.0 ,new Scalar(0,0,255));
-		// Imgcodecs.imwrite("output/img"+measureImage.hashCode()+".png",out);
+		//Imgcodecs.imwrite("output/img"+measureImage.hashCode()+".png",out);
 	}
 
 	public Vector<BeamedNote> getNoteGroups() {
@@ -749,11 +731,11 @@ class BeamedNote {
 		Vector<Point> noteLoc = new Vector<>();
 		if (rect.height >= 22 && rect.width >= 26) {
 			Mat teMat = ImageProcessor.getTemplate(template, 26, 22);
-			double thresh = 0.5;
+			double thresh = 0.4;
 			if(template.equals("template/quarter.png")){
-				thresh=0.7;
+				thresh=0.55;
 			}else if(template.equals("template/half.png")){
-				thresh = 0.55;
+				thresh = 0.45;
 			}
 			Mat matchResult = ImageProcessor.templatematch(measureMat.submat(rect), teMat, thresh);
 
@@ -899,10 +881,7 @@ class BeamedNote {
 							rightinbalck = false;
 						}
 					}
-					// Imgproc.line(out, new Point((int) p.x-20,
-					// g.getPos().y),new Point((int) p.x-20,
-					// g.getPos().y+g.getPos().height), new Scalar(0,0,255));
-					// count left.
+					
 					int headWidth = 20;
 					if (p.x - headWidth > 0) {
 						if (groupMat.get(i, (int) p.x - headWidth)[0] < 0.2) {// black
@@ -941,7 +920,7 @@ class BeamedNote {
 		return durations;
 	}
 
-	public BeamedNote(Mat measureMat, Rect position, int duration, Vector<Integer> lineLoc) {
+	public BeamedNote(Mat measureMat, Rect position, int duration, Vector<Integer> lineLoc,Mat sheet,int x,int y) {
 		// get note info from note group
 
 		notes = new Vector<>();
@@ -950,16 +929,10 @@ class BeamedNote {
 		switch (duration) {
 		case 0://8 or less.
 			Vector<Point> headLoc = getNoteHeadLoc(measureMat, position, "template/quarter.png");
-			/*Mat out = measureMat.submat(position).clone();
-			Imgproc.cvtColor(out, out, Imgproc.COLOR_GRAY2BGR);
-			for (int i = 0; i < headLoc.size(); ++i) {
-				Imgproc.circle(out, headLoc.get(i), 10, new Scalar(0,0,255));
+			for(Point p:headLoc){
+				Imgproc.circle(sheet, new Point(p.x+x+position.x,p.y+position.y+y), 10, new Scalar(255,0,0),5);
 			}
-			for(int i=0;i<lineLoc.size();++i){
-				
-				Imgproc.line(out, new Point(0,lineLoc.get(i)-position.y), new Point(measureMat.cols(),lineLoc.get(i)-position.y), new Scalar(0,255,0));
-			}
-			ImageProcessor.imshow(out);*/
+			
 			Vector<Integer> durations = getDuration(measureMat.submat(position), headLoc);
 			for (int i = 0; i < headLoc.size(); ++i) {
 				pinch = getPinch(measureMat, new Point(headLoc.get(i).x + position.x, headLoc.get(i).y + position.y),
@@ -969,20 +942,22 @@ class BeamedNote {
 			}
 			break;
 		case 1:
-			/*Mat out = measureMat.submat(position).clone();
-			Imgproc.cvtColor(out, out, Imgproc.COLOR_GRAY2BGR);
-			Imgproc.circle(out, getNoteHeadLoc(measureMat, position, "template/whole.png").get(0), 10, new Scalar(0,0,255));
-			ImageProcessor.imshow(out);*/
-			Point headLoc1 = getNoteHeadLoc(measureMat, position, "template/whole.png").get(0);
+			
+			Vector<Point> headLocWhole = getNoteHeadLoc(measureMat, position, "template/whole.png");
+			for(Point p:headLocWhole){
+				Imgproc.circle(sheet, new Point(p.x+x+position.x,p.y+position.y+y), 10, new Scalar(0,255,0),5);
+			}
+			Point headLoc1 = headLocWhole.get(0);
 			pinch = getPinch(measureMat, new Point(headLoc1.x + position.x, headLoc1.y + position.y), lineLoc);
 			notes.add(new Note(1, 0, pinch, 0));
 			break;
 		case 2:
-			/*Mat out = measureMat.submat(position).clone();
-			Imgproc.cvtColor(out, out, Imgproc.COLOR_GRAY2BGR);
-			Imgproc.circle(out, getNoteHeadLoc(measureMat, position, "template/half.png").get(0), 10, new Scalar(0,0,255));
-			ImageProcessor.imshow(out);*/
-			Point headLoc2 = getNoteHeadLoc(measureMat, position, "template/half.png").get(0);
+			
+			Vector<Point> headLochalf = getNoteHeadLoc(measureMat, position, "template/half.png");
+			for(Point p:headLochalf){
+				Imgproc.circle(sheet, new Point(p.x+x+position.x,p.y+position.y+y), 10, new Scalar(0,0,255),5);
+			}
+			Point headLoc2 = headLochalf.get(0);
 			pinch = getPinch(measureMat, new Point(headLoc2.x + position.x, headLoc2.y + position.y), lineLoc);
 			notes.add(new Note(2, 0, pinch, 0));
 			break;
@@ -1008,11 +983,18 @@ class BeamedNote {
 		default:
 			break;
 		}
-		// }
+		
 	}
 
 	public Vector<Note> getNotes() {
 		return notes;
+	}
+}
+
+class NotePlace{
+	Vector<Note> notes;
+	public NotePlace(Vector<Note> notes){
+		this.notes = notes;
 	}
 }
 

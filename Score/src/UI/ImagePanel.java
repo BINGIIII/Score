@@ -8,6 +8,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.nio.channels.ShutdownChannelGroupException;
+import java.util.Calendar;
 
 import javax.swing.JScrollPane;
 import java.awt.GridBagConstraints;
@@ -27,7 +28,11 @@ public class ImagePanel extends JPanel {
 	/**
 	 * Create the panel.
 	 */
+	public void clear(){
+		imagePanel.clear();
+	}
 	public void showImage(String name){
+		clear();
 		imagePanel.showImage(name,50);
 		//updateUI();
 		//repaint();
@@ -78,7 +83,10 @@ public class ImagePanel extends JPanel {
 	class MyImagePanel extends JPanel{
 		int size=50;
 	    private BufferedImage image;
-	    
+	    public void clear(){
+	    	image = null;
+	    	repaint();
+	    }
 	    public void showImage(int size){
 	    	setPreferredSize(new Dimension(image.getWidth()*size/100, image.getHeight()*size/100));
 	    	this.size = size;

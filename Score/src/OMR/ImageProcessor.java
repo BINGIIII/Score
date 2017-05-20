@@ -155,12 +155,12 @@ public class ImageProcessor {
 	}
 
 	public static void imshow(Mat image) {
-		SwingUtilities.invokeLater(new Runnable() {
-			@Override
-			public void run() {
+		//SwingUtilities.invokeLater(new Runnable() {
+			//@Override
+			//public void run() {
 				new ImageViewer(mat2image(image));
-			}
-		});
+			//}
+		//});
 	}
 
 	public static Mat getTemplate(String fName, int width, int height) {

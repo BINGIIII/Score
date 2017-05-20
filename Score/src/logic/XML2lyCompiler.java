@@ -3,7 +3,9 @@ package logic;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.PrintWriter;
+import java.util.Vector;
 
+import javax.jws.WebParam.Mode;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -26,12 +28,18 @@ public class XML2lyCompiler{
 
     PrintWriter out;
     
+    int keyFifth;
+    
+    
     public static void main(String[] args) {
 		new XML2lyCompiler().parser("a.xml", "a.ly");
 		Lilyond.generate("a.ly");
 	}
    
     public void parser(String filename,String outName){
+    	String[] keyMapMajor ={"c","g","d","a","e","b","fis","des","aes","ees","bes","f"};
+        String[] keyMapMinor = {"a","e","b","fis","cis","gis","dis","bes","f","c","g","d"};
+
     	System.setProperty("http.agent", "Mozilla/5.0 (X11; Linux x86_64; rv:47.0) Gecko/20100101 Firefox/47.0");
         DefaultHandler handler = new DefaultHandler() {
         	@Override
@@ -42,9 +50,10 @@ public class XML2lyCompiler{
                 currentTag = localName;
                 switch (localName) {
                     case "score-partwise":
-                        out.print("{");
+                        out.print("{ <<\n");
                         break;
                     case "part":
+                    	out.print("\\new staff {");
                         break;
                     case "measure":
                         break;
@@ -90,7 +99,7 @@ public class XML2lyCompiler{
                         break;
                     case "rest":
                         currentStep = 'r';
-                        break;
+                    break;
                 }
             }
         	
@@ -113,8 +122,14 @@ public class XML2lyCompiler{
                         case "key":
                             break;
                         case "fifths":
+                        	keyFifth = Integer.parseInt(str);
                             break;
                         case "mode":
+                        	if(str.equals("major")){
+                        		out.print("\\key "+keyMapMajor[keyFifth%12]+" \\major ");
+                        	}else {
+								out.print("\\key "+keyMapMinor[keyFifth%12]+" \\minor ");
+							}
                             break;
                         case "time":
                             break;
@@ -127,6 +142,11 @@ public class XML2lyCompiler{
                         case "clef":
                             break;
                         case "sign":
+                        	if(str.equals("G")){
+                        		out .print("\\clef treble ");
+                        	}else if (str.equals("F")) {
+								out.print("\\clef bass ");
+							}
                             break;
                         case "line":
                             break;
@@ -193,11 +213,13 @@ public class XML2lyCompiler{
                 super.endElement(uri, localName, qName);
                 switch (localName) {
                     case "score-partwise":
-                        out.print("}");
+                        out.print(">> }");
                         break;
                     case "part":
+                    	out.print("}");
                         break;
                     case "measure":
+                    	out.println();
                         break;
                     case "attributes":
                         break;
@@ -210,7 +232,7 @@ public class XML2lyCompiler{
                     case "mode":
                         break;
                     case "time"://time 结束输出一个 time
-                        out.print("\\time "+currentBeats+"/"+currentBeatType);
+                        out.print("\\time "+currentBeats+"/"+currentBeatType+" ");
                         break;
                     case "beats":
                         break;
