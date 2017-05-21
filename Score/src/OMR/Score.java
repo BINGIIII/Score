@@ -6,8 +6,11 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.FormatFlagsConversionMismatchException;
 import java.util.List;
 import java.util.Vector;
+
+import javax.swing.plaf.basic.BasicInternalFrameTitlePane.IconifyAction;
 
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
@@ -88,18 +91,34 @@ public class Score {
 			// for(Measure measure:part.getMeasures()){
 			for (int i = 0; i < part.getMeasures().size(); ++i) {
 				// ImageProcessor.imshow(measure.getImage());
+				int time = 0;// 16/16
 				Measure measure = part.getMeasures().get(i);
 				for (BeamedNote group : measure.getNoteGroups()) {
-					for (Note note : group.getNotes()) {
+					for (Vector<Note> notes : group.getNotes()) {
 						// System.out.println(note.getPinchStep()+"
 						// "+note.getDuration());
-						int pinch = note.getPinchStep();
+						if(notes.size()!=1)
+							out.print("<");
 						
-						if (pinch > 0) {
-							int dotnum = pinch / 7 + 1;
-							int step = pinch % 7;
-							if(step==0){
-								dotnum--;
+						int duration = 0;
+						boolean first = true;
+						for(Note note:notes){
+						int pitch = note.getPinchStep();
+	
+						if (!group.isRest) {
+							int step=0;
+							int dotnum =0;
+							if(pitch>=0){
+								dotnum = pitch / 7 + 1;
+								step = pitch % 7;
+								if(step==0){
+									dotnum--;
+								}
+							}else {
+								int t = pitch+7;
+								dotnum = 1;
+								step = t % 7;
+								
 							}
 							char c = 'c';
 							switch (step) {
@@ -129,20 +148,57 @@ public class Score {
 								break;
 							}
 							out.print(c);
+							if(pitch>=0){
 							for (int j = 0; j < dotnum; ++j) {
 								out.print('\'');
+							}}else {
+								for (int j = 0; j < dotnum; ++j) {
+									out.print(',');
+								}
 							}
-							out.print(note.getDuration());
+							if(notes.size()==1){
+								out.print(note.getDuration());
+								time+=16/note.getDuration();
+							}else {
+								duration = note.getDuration();
+								if (first) {
+									time+=16/note.getDuration();
+									first = false;
+								}
+							}
+							int sTime = note.getDuration();
+							
 							for(int j=0;j<note.dot;++j){
-								out.print('.'+" ");
+								out.print('.');
+								sTime*=2;
+								time+=16/sTime;
 							}
+							out.print(" ");
 						} else {
-							out.print("r" + note.getDuration() + " ");
+							int sTime = note.getDuration();
+							out.print("r" + note.getDuration());
+							time+=16/sTime;
+							for(int j=0;j<note.dot;++j){
+								out.print('.');
+								sTime*=2;
+								time+=16/sTime;
+							}
+							out.print(" ");
 						}
 						// System.out.println("-------[goup]--------");
 					}
-					out.print(" |");
+						if(notes.size()!=1){
+							out.print(">"+duration+" ");
+						}
+					}
+					
 				}
+				if(time==16){
+					out.print("[Y "+time+"]");
+				}else {
+					out.print("[N "+time+"]");
+				}
+				out.print(" |\n");
 			}
 			out.println("}");
 		}
@@ -310,9 +366,6 @@ class Part {
 			}
 			if(flag){//remove stem.
 				int left = i-30>0?i-30:0;
-				if(i==1322){
-					System.out.println();;
-				}
 				int width = 60;
 				if(left==0){
 					continue;
@@ -322,8 +375,8 @@ class Part {
 					continue;
 				}
 				//ImageProcessor.imshow(partMat.submat(new Rect(left, 0, width, partMat.rows())));
-				Vector<Point> half = BeamedNote.getNoteHeadLoc(partMat, new Rect(left, lineLoc.get(0)-60, width, 200), "template/half.png");
-				Vector<Point> quarter = BeamedNote.getNoteHeadLoc(partMat,new Rect(left, lineLoc.get(0)-60, width, 200), "template/quarter.png");
+				Vector<Point> half = BeamedNote.getNoteHeadLoc(partMat, new Rect(left, lineLoc.get(0)-80, width, 240), "template/half.png");
+				Vector<Point> quarter = BeamedNote.getNoteHeadLoc(partMat,new Rect(left, lineLoc.get(0)-80, width, 240), "template/quarter.png");
 				if(half.size()==0&&quarter.size()==0){
 					barLineLoc.add(i);
 				}
@@ -516,8 +569,8 @@ class Measure {
 					if(src.rows()>60){
 					Mat quarterNote = ImageProcessor.getTemplate("template/quarter.png", 26, 22);
 					matchResult = ImageProcessor.templatematch(src, quarterNote, 0.55);
-					if (Core.minMaxLoc(matchResult).maxVal > 0.55) {
-						// note
+					if (Core.minMaxLoc(matchResult).maxVal > 1) {
+						// <4 note
 						Imgproc.rectangle(out, new Point(rect.x+x, rect.y+y),new Point(rect.x+x+rect.width, rect.y+y+rect.height), new Scalar(0,0,255));
 						groups.add(new BeamedNote(measureImage, rect, 0, lineLocs,sheet,x,y));
 						
@@ -527,7 +580,7 @@ class Measure {
 					Mat halfNote = ImageProcessor.getTemplate("template/half.png", 26, 22);
 					matchResult = ImageProcessor.templatematch(src, halfNote, 0.45);
 					if (Core.minMaxLoc(matchResult).maxVal > 0.7) {
-						// note
+						// 2note
 						Imgproc.rectangle(out, new Point(rect.x+x, rect.y+y),new Point(rect.x+x+rect.width, rect.y+y+rect.height), new Scalar(0,0,255));
 						groups.add(new BeamedNote(measureImage, rect, 2, lineLocs,sheet,x,y));
 						continue;
@@ -536,7 +589,7 @@ class Measure {
 					Mat wholeNote = ImageProcessor.getTemplate("template/whole.png", 26, 22);
 					matchResult = ImageProcessor.templatematch(src, wholeNote, 0.4);
 					if (Core.minMaxLoc(matchResult).maxVal > 0.7) {
-						// note
+						// 1note
 						Imgproc.rectangle(out, new Point(rect.x+x, rect.y+y),new Point(rect.x+x+rect.width, rect.y+y+rect.height), new Scalar(0,0,255));
 						groups.add(new BeamedNote(measureImage, rect, 1, lineLocs,sheet,x,y));
 						continue;
@@ -549,20 +602,18 @@ class Measure {
 					if (Core.minMaxLoc(matchResult).maxVal > 0.55) {
 						Imgproc.rectangle(out, new Point(rect.x+x, rect.y+y),new Point(rect.x+x+rect.width, rect.y+y+rect.height), new Scalar(0,255,0));
 						// sharp
-						// Imgproc.rectangle(out, rect.tl(), rect.br(), new
-						// Scalar(255,255,0));
+						
 						continue;
 					}
 					// ---------------------------------------------
-					// ImageProcessor.imshow(src);
+					
 					Mat flat = ImageProcessor.getTemplate("template/flat.png", rect.width, rect.height);
 					matchResult = ImageProcessor.templatematch(src, flat, 0.15);
 					// System.out.println(max);
 					if (Core.minMaxLoc(matchResult).maxVal > 0.7) {
 						Imgproc.rectangle(out, new Point(rect.x+x, rect.y+y),new Point(rect.x+x+rect.width, rect.y+y+rect.height), new Scalar(0,255,0));
 						// flat
-						// Imgproc.rectangle(out, rect.tl(), rect.br(), new
-						// Scalar(0,146,255));
+						
 						continue;
 					}
 					// ---------------------------------------------
@@ -572,31 +623,28 @@ class Measure {
 					if (Core.minMaxLoc(matchResult).maxVal > 0.7) {
 						Imgproc.rectangle(out, new Point(rect.x+x, rect.y+y),new Point(rect.x+x+rect.width, rect.y+y+rect.height), new Scalar(0,255,0));
 						// natural
-						// Imgproc.rectangle(out, rect.tl(), rect.br(), new
-						// Scalar(0,146,255));
+						
 						continue;
 					}
 				}
 				if (src.cols() >= 20 && src.rows() >= 50) {
 					Mat qurterRest = ImageProcessor.getTemplate("template/quarterrest.png", rect.width, rect.height);
-					Mat matchResult = ImageProcessor.templatematch(src, qurterRest, 0.3);
+					Mat matchResult = ImageProcessor.templatematch(src, qurterRest, 0.4);
 					if (Core.minMaxLoc(matchResult).maxVal > 0.7) {
 						Imgproc.rectangle(out, new Point(rect.x+x, rect.y+y),new Point(rect.x+x+rect.width, rect.y+y+rect.height), new Scalar(255,255,0));
 						// 4rest
-						// Imgproc.rectangle(out, rect.tl(), rect.br(), new
-						// Scalar(0,255,0));
+						
 						groups.add(new BeamedNote(src, rect, -4, lineLocs,null,0,0));
 						continue;
 					}
 				}
 				if (src.cols() >= 15 && src.rows() >= 25) {
 					Mat rest8 = ImageProcessor.getTemplate("template/8rest.png", rect.width, rect.height);
-					Mat matchResult = ImageProcessor.templatematch(src, rest8, 0.5);
+					Mat matchResult = ImageProcessor.templatematch(src, rest8, 0.4);
 					if (Core.minMaxLoc(matchResult).maxVal > 0.7) {
 						Imgproc.rectangle(out, new Point(rect.x+x, rect.y+y),new Point(rect.x+x+rect.width, rect.y+y+rect.height), new Scalar(255,255,0));
 						// 8rest
-						// Imgproc.rectangle(out, rect.tl(), rect.br(), new
-						// Scalar(255,255,0));
+						
 						groups.add(new BeamedNote(src, rect, -8, lineLocs,null,0,0));
 						continue;
 					}
@@ -639,18 +687,37 @@ class Measure {
 						continue;
 					}
 				}
-				if(src.cols()<11&&src.rows()<11){
+				/*if(src.cols()<11&&src.rows()<11){
 					if(groups.size()>0){
 						groups.get(groups.size()-1).notes.get(0).dot++;
 					}
-				}
+				}*/
 
 				if(src.cols()<12&&src.rows()<12){
-					//dot
-					Imgproc.rectangle(out, new Point(rect.x+x, rect.y+y),new Point(rect.x+x+rect.width, rect.y+y+rect.height), new Scalar(255,255,0),3);
+					//dot,should attach to the closest note in early group.
+					Imgproc.rectangle(out, new Point(rect.x+x, rect.y+y),new Point(rect.x+x+rect.width, rect.y+y+rect.height), new Scalar(255,255,0),1);
 					if(!groups.isEmpty()){
-						BeamedNote beamedNote = groups.get(groups.size()-1);
-						Vector<Note> notes = beamedNote.getNotes();
+						BeamedNote beamedNote = groups.get(groups.size()-1);//last group.
+						Vector<Vector<Note>> notes = beamedNote.getNotes();//no loc info.
+						if(beamedNote.isRest&&notes.get(0).get(0).headLoc.x-rect.x<30){
+							notes.get(0).get(0).addDot();
+						}else{
+							
+						for(int ii=0;ii<notes.size();++ii){
+							while(ii<notes.size()&&rect.x-notes.get(ii).get(0).headLoc.x>30){
+								++ii;
+							}
+							if(ii<notes.size()){
+								for(int xx=notes.get(ii).size()-1;xx>=0;--xx){
+									if(Math.abs(notes.get(ii).get(xx).headLoc.y-rect.y)<20){
+										
+										notes.get(ii).get(xx).addDot();
+										break;
+									}
+								}
+								break;
+							}
+						}}
 					}
 				}
 				// something else, skip
@@ -679,9 +746,10 @@ class BeamedNote {
 	// display info
 	Rect position;
 	int direction;
+	boolean isRest = false;
 
 	// music info
-	Vector<Note> notes;
+	Vector<Vector<Note>> notePlaces;
 
 	public static int getPinch(Mat measureMat, Point headLoc, Vector<Integer> lineLoc) {
 		// warning : headLoc is measurewide.
@@ -728,6 +796,7 @@ class BeamedNote {
 
 	public static Vector<Point> getNoteHeadLoc(Mat measureMat, Rect rect, String template) {
 		// warning : head loc is group wide.
+		//headloc was sorted!!!!
 		Vector<Point> noteLoc = new Vector<>();
 		if (rect.height >= 22 && rect.width >= 26) {
 			Mat teMat = ImageProcessor.getTemplate(template, 26, 22);
@@ -739,10 +808,10 @@ class BeamedNote {
 			}
 			Mat matchResult = ImageProcessor.templatematch(measureMat.submat(rect), teMat, thresh);
 
-			for (int i = 0; i < matchResult.rows(); ++i) {
-				for (int j = 0; j < matchResult.cols(); ++j) {
-					if (matchResult.get(i, j)[0] > 0.3) {
-						noteLoc.add(new Point(j + 13, i + 11));
+			for (int i = 0; i < matchResult.cols(); ++i) {
+				for (int j = 0; j < matchResult.rows(); ++j) {
+					if (matchResult.get(j, i)[0] > 0.3) {
+						noteLoc.add(new Point(i + 13, j + 11));
 					}
 
 				}
@@ -752,7 +821,11 @@ class BeamedNote {
 
 			@Override
 			public int compare(Point o1, Point o2) {
-				return (int) (o1.x-o2.x);
+				if(Math.abs(o1.x-o2.x)<20){
+					return (int) (o1.y-o2.y);
+				}else {
+					return (int) (o1.x-o2.x);
+				}
 			}
 		});
 		return noteLoc;
@@ -760,11 +833,14 @@ class BeamedNote {
 
 	public Vector<Integer> getDuration(Mat groupMat, Vector<Point> headLocs) {
 		// determine the note direction, up or down
+		
+		
 		Vector<Integer> durations = new Vector<>();
 		Vector<Integer> stemLocs = ImageProcessor.findPeakY(groupMat, false);
 		if (headLocs.get(0).x < stemLocs.get(0)) {
 			// down,
-			for (Point p : headLocs) {
+			for (int x=0;x<headLocs.size();++x){
+				Point p = headLocs.get(x);
 				int left = 0, right = 0;
 				int leftcounter = 0;
 				boolean leftinbalck = true;
@@ -776,13 +852,13 @@ class BeamedNote {
 				boolean rightAdded = false;
 				for (int i = (int) p.y; i > 0; --i) {// bottom to top.
 					// count left
-					if (groupMat.get(i, (int) p.x)[0] < 0.2) {// black
+					if (groupMat.get(i, (int) p.x+5)[0] < 0.2) {// black
 						if (lefthead) {
 							// continue;
 						} else {
 							if (leftinbalck) {
 								leftcounter++;
-								if (leftcounter > 3 && !leftAdded) {
+								if (leftcounter > 5 && !leftAdded) {
 									left++;
 									leftAdded = true;
 								}
@@ -793,6 +869,7 @@ class BeamedNote {
 							}
 						}
 					} else {// white.
+						leftcounter=0;
 						leftAdded = false;
 						lefthead = false;
 						if (!leftinbalck) {
@@ -809,7 +886,7 @@ class BeamedNote {
 
 							if (rightinbalck) {
 								rightcounter++;
-								if (rightcounter > 3 && !rightAdded) {
+								if (rightcounter > 5 && !rightAdded) {
 									right++;
 									rightAdded = true;
 								}
@@ -820,6 +897,7 @@ class BeamedNote {
 							}
 
 						} else {// white.
+							rightcounter=0;
 							rightAdded = false;
 							// righthead =false;
 							if (!rightinbalck) {
@@ -835,11 +913,18 @@ class BeamedNote {
 				} else {
 					durations.add((int) Math.pow(2, right + 2));
 				}
+				if(x-1>=0&&Math.abs(headLocs.get(x).x-headLocs.get(x-1).x)<20){
+					++x;//escape!!!!
+				}
 			}
+			
 		} else {
 			// up,
-			for (Point p : headLocs) {
-
+			for (int x=0;x<headLocs.size();++x) {
+				while(x+1<headLocs.size()&&Math.abs(headLocs.get(x).x-headLocs.get(x+1).x)<20){
+					++x;//escape!!!!
+				}
+				Point p = headLocs.get(x);
 				int left = 0, right = 0;
 				int leftcounter = 0;
 				boolean leftinbalck = false;
@@ -855,14 +940,14 @@ class BeamedNote {
 					// Point((int) p.x, g.getPos().y+g.getPos().height), new
 					// Scalar(0,0,255));
 					// count right
-					if (groupMat.get(i, (int) p.x)[0] < 0.2) {// black
+					if (groupMat.get(i, (int) p.x-5)[0] < 0.2) {// black
 
 						if (righthead) {
 							// continue;
 						} else {
 							if (rightinbalck) {
 								rightcounter++;
-								if (rightcounter > 3 && !rightAdded) {
+								if (rightcounter > 5 && !rightAdded) {
 									right++;
 									rightAdded = true;
 								}
@@ -873,6 +958,7 @@ class BeamedNote {
 							}
 						}
 					} else {// white.
+						rightcounter=0;
 						rightAdded = false;
 						righthead = false;
 						if (!rightinbalck) {
@@ -888,7 +974,7 @@ class BeamedNote {
 
 							if (leftinbalck) {
 								leftcounter++;
-								if (leftcounter > 3 && !leftAdded) {
+								if (leftcounter > 5 && !leftAdded) {
 									left++;
 									leftAdded = true;
 								}
@@ -899,6 +985,7 @@ class BeamedNote {
 							}
 
 						} else {// white.
+							leftcounter=0;
 							leftAdded = false;
 
 							if (!leftinbalck) {
@@ -921,24 +1008,47 @@ class BeamedNote {
 	}
 
 	public BeamedNote(Mat measureMat, Rect position, int duration, Vector<Integer> lineLoc,Mat sheet,int x,int y) {
-		// get note info from note group
-
-		notes = new Vector<>();
+		// notes in group sort by x.
+		if(duration<0){
+			isRest = true;
+		}
+		notePlaces = new Vector<>();
 		int pinch = 0;
+		Vector<Note> noteT;
 		// if(duration!=0){
 		switch (duration) {
-		case 0://8 or less.
+		case 0://4 or less.
 			Vector<Point> headLoc = getNoteHeadLoc(measureMat, position, "template/quarter.png");
 			for(Point p:headLoc){
 				Imgproc.circle(sheet, new Point(p.x+x+position.x,p.y+position.y+y), 10, new Scalar(255,0,0),5);
 			}
 			
+			Vector<Vector<Point>> places = new Vector<>();
+			for(int i =0;i<headLoc.size();++i){
+				Vector<Point> place = new Vector<>();
+				place.add(headLoc.get(i));
+				while(i+1<headLoc.size()&&Math.abs(headLoc.get(i).x-headLoc.get(i+1).x)<25){
+					place.add(headLoc.get(i+1));
+					++i;
+				}
+				places.add(place);
+			}
+			if(places.size()==1&&places.get(0).size()==3){
+				System.err.println();
+			}
+			
 			Vector<Integer> durations = getDuration(measureMat.submat(position), headLoc);
-			for (int i = 0; i < headLoc.size(); ++i) {
-				pinch = getPinch(measureMat, new Point(headLoc.get(i).x + position.x, headLoc.get(i).y + position.y),
-						lineLoc);
-				//System.out.println(pinch);
-				notes.add(new Note(durations.get(i), 0, pinch, 0));
+			
+			for(int i=0;i<places.size();++i){
+				Vector<Note> notes = new Vector<>();
+				
+				for(int j=0;j<places.get(i).size();++j){
+					pinch = getPinch(measureMat,new Point(places.get(i).get(j).x+ position.x,places.get(i).get(j).y+position.y), lineLoc);
+					notes.add(new Note(durations.get(i), 0, pinch, new Point(places.get(i).get(j).x+ position.x,places.get(i).get(j).y+position.y)));
+					
+				}
+				
+				notePlaces.add(notes);
 			}
 			break;
 		case 1:
@@ -947,37 +1057,55 @@ class BeamedNote {
 			for(Point p:headLocWhole){
 				Imgproc.circle(sheet, new Point(p.x+x+position.x,p.y+position.y+y), 10, new Scalar(0,255,0),5);
 			}
-			Point headLoc1 = headLocWhole.get(0);
-			pinch = getPinch(measureMat, new Point(headLoc1.x + position.x, headLoc1.y + position.y), lineLoc);
-			notes.add(new Note(1, 0, pinch, 0));
+			noteT = new Vector<>();
+			for(Point p:headLocWhole){
+				pinch = getPinch(measureMat, new Point(p.x + position.x, p.y + position.y), lineLoc);
+				noteT.add(new Note(1, 0, pinch, new Point(p.x + position.x, p.y + position.y)));
+			}
+			notePlaces.add(noteT);
 			break;
 		case 2:
 			
 			Vector<Point> headLochalf = getNoteHeadLoc(measureMat, position, "template/half.png");
+			
+			
+			noteT = new Vector<>();
 			for(Point p:headLochalf){
 				Imgproc.circle(sheet, new Point(p.x+x+position.x,p.y+position.y+y), 10, new Scalar(0,0,255),5);
+				pinch = getPinch(measureMat, new Point(p.x + position.x,p.y + position.y), lineLoc);
+				noteT.add(new Note(2, 0, pinch, new Point(p.x+position.x,p.y+position.y)));
 			}
-			Point headLoc2 = headLochalf.get(0);
-			pinch = getPinch(measureMat, new Point(headLoc2.x + position.x, headLoc2.y + position.y), lineLoc);
-			notes.add(new Note(2, 0, pinch, 0));
+			notePlaces.add(noteT);
 			break;
 		case -1:
-			notes.add(new Note(1, 0, 0, 0));
+			noteT = new Vector<>();
+			noteT.add(new Note(1, 0, 0, position.br()));
+			notePlaces.add(noteT);
 			break;
 		case -2:
-			notes.add(new Note(2, 0, 0, 0));
+			noteT = new Vector<>();
+			noteT.add(new Note(2, 0, 0,  position.br()));
+			notePlaces.add(noteT);
 			break;
 		case -4:
-			notes.add(new Note(4, 0, 0, 0));
+			noteT = new Vector<>();
+			noteT.add(new Note(4, 0, 0,  position.br()));
+			notePlaces.add(noteT);
 			break;
 		case -8:
-			notes.add(new Note(8, 0, 0, 0));
+			noteT = new Vector<>();
+			noteT.add(new Note(8, 0, 0,  position.br()));
+			notePlaces.add(noteT);
 			break;
 		case -16:
-			notes.add(new Note(16, 0, 0, 0));
+			noteT = new Vector<>();
+			noteT.add(new Note(16, 0, 0,  position.br()));
+			notePlaces.add(noteT);
 			break;
 		case -32:
-			notes.add(new Note(32, 0, 0, 0));
+			noteT = new Vector<>();
+			noteT.add(new Note(32, 0, 0,  position.br()));
+			notePlaces.add(noteT);
 			break;
 
 		default:
@@ -986,17 +1114,12 @@ class BeamedNote {
 		
 	}
 
-	public Vector<Note> getNotes() {
-		return notes;
+	public Vector<Vector<Note>> getNotes() {
+		return notePlaces;
 	}
 }
 
-class NotePlace{
-	Vector<Note> notes;
-	public NotePlace(Vector<Note> notes){
-		this.notes = notes;
-	}
-}
+
 
 class Note {
 	// diaplay info
@@ -1011,12 +1134,12 @@ class Note {
 	int dot;
 	int accidentals;
 
-	public Note(int duration, int pinchOctave, int pinchStep, int dot) {
+	public Note(int duration, int pinchOctave, int pinchStep,Point headLoc) {
 		super();
 		this.duration = duration;
 		this.pinchOctave = pinchOctave;
 		this.pinchStep = pinchStep;
-		this.dot = dot;
+		this.headLoc = headLoc;
 	}
 
 	public int getDuration() {
@@ -1025,6 +1148,17 @@ class Note {
 
 	public int getPinchStep() {
 		return pinchStep;
+	}
+	
+	public void addDot(){
+		dot++;
+	}
+	public int getDot() {
+		return dot;
+	}
+
+	public void setDot(int dot) {
+		this.dot = dot;
 	}
 
 }

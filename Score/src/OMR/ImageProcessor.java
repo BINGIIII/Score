@@ -200,6 +200,7 @@ public class ImageProcessor {
 	}
 
 	public static Mat templatematch(Mat src, Mat template,double threshold) {
+		//remove muti math!!!
 		Mat matchResult = new Mat();
 		if(src.cols()<template.cols()||src.rows()<template.rows()){
 			matchResult = Mat.zeros(src.size(), CvType.CV_8UC1);
@@ -210,8 +211,8 @@ public class ImageProcessor {
 		for(int i=0;i<matchResult.rows();++i){
 			for(int j=0;j<matchResult.cols();++j){ 
 				if (matchResult.get(i, j)[0]>0.3) {
-					for(int m=-3;m<=3;++m){
-						for(int n=-3;n<=3;++n){
+					for(int m=-5;m<=5;++m){
+						for(int n=-5;n<=5;++n){
 							if(!(m==0&&n==0)&&(i+m<matchResult.rows()&&i+m>=0)&&
 									(j+n<matchResult.cols()&&j+n>=0)&&
 									matchResult.get(i+m, j+n)[0]>0.3){
