@@ -1,6 +1,7 @@
 package logic;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.logging.Logger;
@@ -10,7 +11,11 @@ public class Lilyond {
 	
 	public static void generate(String inputfile){
 		try {
-			Process process = Runtime.getRuntime().exec('\"'+lilyponddir+"\\lilypond\" --png -dresolution=400 "+inputfile);
+			File dir = new File("result");
+			for (String fName : dir.list()) {
+				new File("result/" + fName).delete();
+			}
+			Process process = Runtime.getRuntime().exec('\"'+lilyponddir+"\\lilypond\" --png -dresolution=400 -o result "+inputfile);
 			BufferedReader reader =
 					new BufferedReader(new InputStreamReader(process.getErrorStream()));
 					while ((reader.readLine()) != null) {}

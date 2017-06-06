@@ -96,6 +96,9 @@ public class ImagePanel extends JPanel {
 	    	try {
 	    		File file = new File(name);
 				image = ImageIO.read(file);
+				if(image==null){
+					return;//not image
+				}
 				setPreferredSize(new Dimension(image.getWidth()*size/100, image.getHeight()*size/100));
 				this.size = size;
 				repaint();

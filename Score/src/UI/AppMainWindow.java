@@ -4,7 +4,9 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.colorchooser.ColorChooserComponentFactory;
 
+import OMR.JianScore;
 import OMR.Score;
+import logic.Lilyond;
 import logic.XML2lyCompiler;
 
 import java.awt.*;
@@ -155,9 +157,9 @@ public class AppMainWindow{
         JMenu stepMenu = new JMenu("Step");
         JMenuItem loadStave = new JMenuItem("Load Stave...");
         JMenuItem loadjianpu = new JMenuItem("Load Jianpu...");
-        JMenuItem stave2xml = new JMenuItem("Convert Stave to MusicXML");
-        JMenuItem stave2ly = new JMenuItem("Convert Stave to Lilypond");
-        stave2ly.addActionListener(new ActionListener() {
+        JMenuItem stave2midi = new JMenuItem("Convert Stave to MIDI");
+        JMenuItem stave2jianpu = new JMenuItem("Convert Stave to Jianpu");
+        stave2midi.addActionListener(new ActionListener() {
 			
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -173,13 +175,41 @@ public class AppMainWindow{
 					                    "1");
 					if(s!=null){
 						int num = Integer.parseInt(s);
-						new Score(GlobleVariable.getScoreDir(), num).convert2lilypond("x.ly");
+						
+						new SwingWorker<Integer, Integer>() {
+
+							@Override
+							protected Integer doInBackground() throws Exception {
+								// TODO Auto-generated method stub
+								new Score(GlobleVariable.getScoreDir(), num).convert2lilypond("x.ly");
+								return 0;
+							}
+
+							@Override
+							protected void done() {
+								// TODO Auto-generated method stub
+								super.done();
+								scorePanel.showData(new File("output"));
+//								scorePanel.showMidiPlayer();
+								//Logger.getGlobal().info("score2ly");
+								//lyEditor.setFile(new File("x.ly"));
+								//mainPanel.removeAll();
+								//mainPanel.add(lyEditor);
+								//mainPanel.updateUI();
+								//Logger.getGlobal().info("show lyEditor\n");
+							}
+							
+						}.execute();
+						/*new Score(GlobleVariable.getScoreDir(), num).convert2lilypond("x.ly");
 						Logger.getGlobal().info("score2ly");
 						lyEditor.setFile(new File("x.ly"));
 						mainPanel.removeAll();
 						mainPanel.add(lyEditor);
 						mainPanel.updateUI();
-						Logger.getGlobal().info("show lyEditor\n");
+						Logger.getGlobal().info("show lyEditor\n");*/
+								
+						
+						
 					}
 				}
 				
@@ -199,20 +229,60 @@ public class AppMainWindow{
 				}
 			}
 		});
-        JMenuItem ly2stave = new JMenuItem("Engrave ly to Stave");
-        JMenuItem ly2jianpu = new JMenuItem("Engrave ly to Jianpu");
-        JMenuItem ly2midi = new JMenuItem("Produce MIDI From ly");
+        JMenuItem jian2midi = new JMenuItem("Convert Jianpu to MIDI");
+        JMenuItem jian2stave = new JMenuItem("Convert Jianpu to Stave");
+        jian2midi.addActionListener(new ActionListener() {	
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if(GlobleVariable.getScoreDir()!=null){
+					Object[] possibilities = {"1", "2", "3","4"};
+					String s = (String)JOptionPane.showInputDialog(
+					                    mainFrame,
+					                    "Part Number :",
+					                    "Part Number",
+					                    JOptionPane.PLAIN_MESSAGE,
+					                    null,
+					                    possibilities,      
+					                    "1");
+					if(s!=null){
+						int num = Integer.parseInt(s);
+						
+						new SwingWorker<Integer, Integer>() {
+
+							@Override
+							protected Integer doInBackground() throws Exception {
+								// TODO Auto-generated method stub
+								new JianScore(GlobleVariable.getScoreDir(), num).convert2ly("x.ly");
+								return 0;
+							}
+
+							@Override
+							protected void done() {
+								super.done();
+								Lilyond.generate("x.ly");
+								scorePanel.showData(new File("output"));
+								scorePanel.showResult(new File("result"));
+								scorePanel.showMidiPlayer("result/x.mid");
+							}
+							
+						}.execute();
+					}
+				}
+				
+			}
+		});
+
         stepMenu.add(loadStave);
         stepMenu.add(loadjianpu);
         stepMenu.addSeparator();
-        stepMenu.add(stave2ly);
-        stepMenu.add(stave2xml);
+        stepMenu.add(stave2midi);
+        stepMenu.add(stave2jianpu);
+        stepMenu.addSeparator();
+        stepMenu.add(jian2midi);
+        stepMenu.add(jian2stave);
         stepMenu.addSeparator();
         stepMenu.add(xml2ly);
         stepMenu.addSeparator();
-        stepMenu.add(ly2stave);
-        stepMenu.add(ly2jianpu);
-        stepMenu.add(ly2midi);
         
         menuBar.add(stepMenu);
         //==============================================================View menu        

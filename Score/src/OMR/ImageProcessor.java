@@ -33,10 +33,14 @@ public class ImageProcessor {
 			Vector<Integer> peakLoc = new Vector<>();
 
 			Mat temp = mat.clone();
-			//Core.bitwise_not(mat, temp);
+			Core.bitwise_not(mat, temp);
 
 			Mat vector = new Mat();
-			Core.reduce(temp, vector, 1, Core.REDUCE_AVG);
+			Core.reduce(temp, vector, 0, Core.REDUCE_AVG);
+			
+			for(int i=0;i<vector.cols();++i){
+				System.out.print(i+": "+vector.get(0, i)[0]+"| ");
+			}
 
 			int threshold = 100;
 			double[] white = new double[1];
@@ -119,6 +123,25 @@ public class ImageProcessor {
 			//imshow(temp);
 		}
 	}
+
+	
+	public static Vector<Mat> getSheets(String dirName) {
+		//to do: need some step to phase noise !!!
+		// rgb2gray and gray2bw.
+		File directory = new File(dirName);
+		String[] fileList = directory.list();
+
+		Vector<Mat> sheets = new Vector<>();
+
+		for (String s : fileList) {
+			Mat mat = Imgcodecs.imread(dirName + "/" + s);
+			Imgproc.cvtColor(mat, mat, Imgproc.COLOR_RGB2GRAY);
+			//Imgproc.GaussianBlur(mat, mat, new Size(3,3),0);
+			Imgproc.threshold(mat, mat, 200, 255, Imgproc.THRESH_BINARY);
+			sheets.add(mat);
+		}
+		return sheets;
+	}
 	
 	public static BufferedImage mat2image(Mat mat) {
 		BufferedImage img;
@@ -155,12 +178,12 @@ public class ImageProcessor {
 	}
 
 	public static void imshow(Mat image) {
-		//SwingUtilities.invokeLater(new Runnable() {
-			//@Override
-			//public void run() {
+		SwingUtilities.invokeLater(new Runnable() {
+			@Override
+			public void run() {
 				new ImageViewer(mat2image(image));
-			//}
-		//});
+			}
+		});
 	}
 
 	public static Mat getTemplate(String fName, int width, int height) {
@@ -173,29 +196,24 @@ public class ImageProcessor {
 		return template;
 	}
 
-	public static Vector<Mat> getSheets(String dirName) {
-		//to do: need some step to phase noise !!!
-		// rgb2gray and gray2bw.
-		File directory = new File(dirName);
-		String[] fileList = directory.list();
-
-		Vector<Mat> sheets = new Vector<>();
-
-		for (String s : fileList) {
-			Mat mat = Imgcodecs.imread(dirName + "/" + s);
-			Imgproc.cvtColor(mat, mat, Imgproc.COLOR_RGB2GRAY);
-			//Imgproc.GaussianBlur(mat, mat, new Size(3,3),0);
-			Imgproc.threshold(mat, mat, 200, 255, Imgproc.THRESH_BINARY);
-			sheets.add(mat);
-		}
-		return sheets;
-	}
-
 	public static List<MatOfPoint> findContours(Mat mat) {
 		Mat temp = new Mat();
 		Core.bitwise_not(mat, temp);
 		List<MatOfPoint> contours = new ArrayList<MatOfPoint>();
 		Imgproc.findContours(temp, contours, new Mat(), Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
+		contours.sort(new Comparator<MatOfPoint>() {
+			@Override
+			public int compare(MatOfPoint o1, MatOfPoint o2) {
+				Rect rect1 = Imgproc.boundingRect(o1);
+				Rect rect2 = Imgproc.boundingRect(o2);
+				if (Math.abs(rect1.y - rect2.y) < 60) {
+					return rect1.x - rect2.x;
+				} else {
+					return rect1.y - rect2.y;
+				}
+			}
+		});
+
 		return contours;
 	}
 
@@ -238,7 +256,7 @@ public class ImageProcessor {
 		Core.bitwise_not(temp, temp);
 		Mat vector = new Mat();
 		Core.reduce(temp, vector, 0, Core.REDUCE_AVG);
-		double threshold = (255*mat.rows()*0.4)/mat.rows();
+		double threshold = 255*0.4;
 		double[] white = new double[1];
 		white[0] = 255;
 
@@ -266,19 +284,23 @@ public class ImageProcessor {
 	}
 
 	public static Vector<Integer> findPeaks(Mat mat) {
+		
 		Vector<Integer> peakLoc = new Vector<>();
 
 		Mat temp = new Mat();
 		mat.copyTo(temp);
+		//Core.bitwise_not(temp, temp);
 
 		Mat vector = new Mat();
 		Core.reduce(temp, vector, 1, Core.REDUCE_AVG);
+		
 
 		int threshold = 100;
 		double[] white = new double[1];
 		white[0] = 255;
 
 		for (int i = 0; i < vector.rows(); ++i) {
+			
 			if (vector.get(i, 0)[0] < threshold) {// 1 is line
 				for (int j = 0; j < mat.cols(); ++j) {
 					if (!(Math.abs(mat.get(i - 3, j)[0]) < 5 || Math.abs(mat.get(i + 3, j)[0]) < 5)) {
