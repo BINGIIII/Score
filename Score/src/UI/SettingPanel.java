@@ -45,7 +45,7 @@ public class SettingPanel extends JFrame{
 			
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				GlobleVariable.setLilypondPath(textField.getText());
+				GlobalVariable.setLilypondPath(textField.getText());
 				SettingPanel.this.dispose();
 			}
 		});

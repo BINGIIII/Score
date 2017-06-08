@@ -2,6 +2,10 @@ package UI;
 
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
+
+import OMR.JianScore;
+import logic.Lilyond;
 
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
@@ -64,20 +68,30 @@ public class LyEditor extends JPanel {
 			
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				PrintWriter out = null;
-				try {
-					out = new PrintWriter(new File("temply.ly"));
-					out.print(lyText.getText());
-					out.close();
-					Logger.getGlobal().info("crete temp ly");
-					logic.Lilyond.generate("temply.ly");
-					Logger.getGlobal().info("create temp png");
-					lyImage.showImage("./temply.png");
-					Logger.getGlobal().info("show temp png");
-				} catch (FileNotFoundException  e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
+				
+				new SwingWorker<Integer, Integer>() {
+
+					@Override
+					protected Integer doInBackground() throws Exception {
+						// TODO Auto-generated method stub
+						PrintWriter out = null;
+						out = new PrintWriter(new File("temply.ly"));
+						out.print(lyText.getText());
+						out.close();
+						Logger.getGlobal().info("crete temp ly");
+						logic.Lilyond.generate("temply.ly");
+						Logger.getGlobal().info("create temp png");
+						return 0;
+					}
+
+					@Override
+					protected void done() {
+						super.done();
+						lyImage.showImage("result/temply.png");
+						Logger.getGlobal().info("show temp png");
+					}
+					
+				}.execute();
 			}
 		});
 		GridBagConstraints gbc_lyGenerate = new GridBagConstraints();

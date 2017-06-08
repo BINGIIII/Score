@@ -36,6 +36,7 @@ public class Score {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		
 //		out.print("{ << ");
 		final String[] numMap = {"zero","one","two","three"};
 		final String[] clefMap = {"treble","bass"};
@@ -51,13 +52,14 @@ public class Score {
 
 			for (int i = 0; i < part.getMeasures().size(); ++i) {
 
-				int time = 0;// 16/16
+				int time = 0;// 32/32
 				Measure measure = part.getMeasures().get(i);
+				StringBuilder builder = new StringBuilder();
 				for (BeamedNote group : measure.getNoteGroups()) {
 					for (Vector<Note> notes : group.getNotes()) {
 
 						if (notes.size() != 1)
-							out.print("<");
+							builder.append("<");
 
 						int duration = 0;
 						boolean first = true;
@@ -67,107 +69,129 @@ public class Score {
 							if (!group.isRest) {
 								int step = 0;
 								int dotnum = 0;
-								if (pitch >= 0) {
-									dotnum = pitch / 7 + 1;
-									step = pitch % 7;
-									if (step == 0) {
-										dotnum--;
-									}
-								} else {
-									int t = pitch + 7;
-									dotnum = 1;
-									step = t % 7;
-
+								//if (pitch >= 0) {
+								int kk = 0;
+								while(pitch<0){
+									pitch+=7;
+									++kk;
 								}
+									dotnum = pitch / 7 + 1 -kk;
+									step = pitch % 7;
+									//if (step == 0) {
+										//dotnum--;
+									//}
+								//} else {
+									//int t = pitch + 7;
+									//dotnum = 1;
+									//step = t % 7;
+
+								//}
 								char c = 'c';
 								switch (step) {
-								case 1:
+								case 0:
 									c = 'c';
 									break;
-								case 2:
+								case 1:
 									c = 'd';
 									break;
-								case 3:
+								case 2:
 									c = 'e';
 									break;
-								case 4:
+								case 3:
 									c = 'f';
 									break;
-								case 5:
+								case 4:
 									c = 'g';
 									break;
-								case 6:
+								case 5:
 									c = 'a';
 									break;
-								case 0:
+								case 6:
 									c = 'b';
 									break;
 
 								default:
 									break;
 								}
-								out.print(c);
-								if (pitch >= 0) {
+								builder.append(c);
+								if (dotnum >= 0) {
 									for (int j = 0; j < dotnum; ++j) {
-										out.print('\'');
+										builder.append('\'');
 									}
 								} else {
-									for (int j = 0; j < dotnum; ++j) {
-										out.print(',');
+									for (int j = 0; j < -dotnum; ++j) {
+										builder.append(',');
 									}
 								}
 								if (notes.size() == 1) {
-									out.print(note.getDuration());
-									time += 16 / note.getDuration();
+									builder.append(note.getDuration());
+									time += 32 / note.getDuration();
 									int sTime = note.getDuration();
 
 									for (int j = 0; j < note.dot; ++j) {
-										out.print('.');
+										builder.append('.');
 										sTime *= 2;
-										time += 16 / sTime;
+										time += 32 / sTime;
 									}
-									out.print(" ");
+									builder.append(" ");
 								} else {
 									duration = note.getDuration();
 									if (first) {
-										time += 16 / note.getDuration();
+										time += 32 / note.getDuration();
 										first = false;
 									}
-									out.print(" ");
+									builder.append(" ");
 								}
 								
 							} else {
 								int sTime = note.getDuration();
-								out.print("r" + note.getDuration());
-								time += 16 / sTime;
+								builder.append("r" + note.getDuration());
+								time += 32 / sTime;
 								for (int j = 0; j < note.dot; ++j) {
-									out.print('.');
+									builder.append('.');
 									sTime *= 2;
-									time += 16 / sTime;
+									time += 32 / sTime;
 								}
-								out.print(" ");
+								builder.append(" ");
 							}
 
 						}
 						if (notes.size() != 1) {
-							out.print(">" + duration + " ");
+							builder.append(">" + duration + " ");
 							/*int sTime = note.getDuration();
 
 							for (int j = 0; j < note.dot; ++j) {
-								out.print('.');
+								builder.append('.');
 								sTime *= 2;
 								time += 16 / sTime;
 							}
-							out.print(" ");*/
+							builder.append(" ");*/
 						}
 					}
 
 				}
-//				if (time == 16) {
-//					out.print("[Y " + time + "]");
-//				} else {
-//					out.print("[N " + time + "]");
-//				}
+				if (time == 32) {
+					out.print(builder.toString());
+					//builder.append("[Y " + time + "]");
+				} else if(time<32){
+					if(32%(32-time)!=0){
+						int count = 32-time;
+						while(count>1){
+							count-=2;
+							builder.append("r"+16);
+						}
+						if(count==1){
+							builder.append("r"+32);
+						}
+					}else {
+						builder.append("r"+32/(32-time));
+					}
+					
+					out.print(builder.toString());
+//					builder.append("[N " + time + "]");
+				}else {
+					out.print("r1");
+				}
 				out.print(" |\n");//end of measure!!!!
 			}
 			out.println("}");//end of part!!
@@ -700,7 +724,7 @@ class BeamedNote {
 			}
 		}
 		if(partID==1){
-			pinch-=13;
+			pinch-=12;
 		}
 		pinch--;
 		return pinch;

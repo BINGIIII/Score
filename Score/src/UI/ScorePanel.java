@@ -20,13 +20,15 @@ public class ScorePanel extends JPanel {
 	JTabbedPane mainPanel;
 	JTabbedPane rawPanel;//raw image.
 	JTabbedPane dataPanel;//OMR view
-	TextPanel lyPanel;
-	TextPanel jiaPanel;
 	MIDIPanel midiPanel;//midi player
-	JTabbedPane outPanel;
+	JTabbedPane outPanel;//result panel.
+//	File rawFile;
+//	File resultFile;
+//	File dataFile;
+//	File midiFile;
 
-	public void showResult(File file){
-		mainPanel.addTab("Output", null, outPanel, null);
+	public void showResult(String path){
+		File file = new File(path);
 		outPanel.removeAll();
 		if(file.isDirectory()){
 			for(String s:file.list()){
@@ -35,7 +37,7 @@ public class ScorePanel extends JPanel {
 				}
 				ImagePanel panel = new ImagePanel();
 				outPanel.add(s, panel);
-				panel.showImage(file.getPath()+'\\'+s);
+				panel.showImage(path+'\\'+s);
 			}
 		}else {
 			ImagePanel panel = new ImagePanel();
@@ -46,10 +48,8 @@ public class ScorePanel extends JPanel {
 
 	public void showMidiPlayer(String filename){
 		midiPanel.setFile(filename);
-		add(midiPanel, BorderLayout.EAST);
 	}
 	public void showData(File file){
-		mainPanel.addTab("Date", null, dataPanel, "OMR data");
 		dataPanel.removeAll();
 		if(file.isDirectory()){
 			for(String s:file.list()){
@@ -64,7 +64,6 @@ public class ScorePanel extends JPanel {
 		}
 	}
 	public void showScore(File file){
-		mainPanel.addTab("Image", null, rawPanel, null);
 		rawPanel.removeAll();
 		if(file.isDirectory()){
 			for(String s:file.list()){
@@ -79,29 +78,20 @@ public class ScorePanel extends JPanel {
 		}
 	}
 	
-	public ScorePanel(Vector<String> images) {
+	public ScorePanel() {
 		setLayout(new BorderLayout(0, 0));
 		
-		mainPanel = new JTabbedPane(JTabbedPane.TOP);
+		mainPanel = new JTabbedPane(JTabbedPane.TOP);//init main tabbed panel
 		add(mainPanel, BorderLayout.CENTER);
 		
-		rawPanel = new JTabbedPane(JTabbedPane.TOP);
-//		mainPanel.addTab("Image", null, rawPanel, null);
-		
+		rawPanel = new JTabbedPane(JTabbedPane.TOP);//init all 4 panel
+		mainPanel.addTab("Image", null, rawPanel, null);
 		dataPanel = new JTabbedPane(JTabbedPane.TOP);
-//		mainPanel.addTab("Date", null, dataPanel, null);
-	
+		mainPanel.addTab("Date", null, dataPanel, "OMR data");
 		outPanel = new JTabbedPane(JTabbedPane.TOP);
-	
+		mainPanel.addTab("Output", null, outPanel, null);
 		midiPanel = new MIDIPanel();
-	
-		if(images!=null){
-		for(String path:images){
-			ImagePanel panel = new ImagePanel();
-			rawPanel.add(path, panel);
-			panel.showImage(path);
-		}}
-
+		add(midiPanel, BorderLayout.EAST);
 	}
 
 }

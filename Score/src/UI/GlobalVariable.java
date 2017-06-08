@@ -2,7 +2,7 @@ package UI;
 
 import java.io.File;
 
-public class GlobleVariable {
+public class GlobalVariable {
 	static int partNum;
 	static String lilypondPath;
 	static String scoreDir;
@@ -15,7 +15,7 @@ public class GlobleVariable {
 	}
 
 	public static void setLilypondPath(String lilypondPath) {
-		GlobleVariable.lilypondPath = lilypondPath;
+		GlobalVariable.lilypondPath = lilypondPath;
 	}
 
 	public static String getScoreDir() {
@@ -23,7 +23,7 @@ public class GlobleVariable {
 	}
 
 	public static void setScoreDir(String scoreDir) {
-		GlobleVariable.scoreDir = scoreDir;
+		GlobalVariable.scoreDir = scoreDir;
 	}
 
 	public static String getXmlPath() {
@@ -31,7 +31,7 @@ public class GlobleVariable {
 	}
 
 	public static void setXmlPath(String xmlPath) {
-		GlobleVariable.xmlPath = xmlPath;
+		GlobalVariable.xmlPath = xmlPath;
 	}
 
 	public static String getOutDir() {
@@ -39,7 +39,7 @@ public class GlobleVariable {
 	}
 
 	public static void setOutDir(String outDir) {
-		GlobleVariable.outDir = outDir;
+		GlobalVariable.outDir = outDir;
 	}
 
 	public static String getMidiPath() {
@@ -47,7 +47,7 @@ public class GlobleVariable {
 	}
 
 	public static void setMidiPath(String midiPath) {
-		GlobleVariable.midiPath = midiPath;
+		GlobalVariable.midiPath = midiPath;
 	}
 
 	public static int getPartNum() {
@@ -55,6 +55,6 @@ public class GlobleVariable {
 	}
 
 	public static void setPartNum(int partNum) {
-		GlobleVariable.partNum = partNum;
+		GlobalVariable.partNum = partNum;
 	}
 }

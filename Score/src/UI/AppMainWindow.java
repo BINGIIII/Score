@@ -23,15 +23,10 @@ public class AppMainWindow{
 	JFrame mainFrame;
 	JPanel mainPanel;
 	JMenuBar menuBar;
-	
 	File lilypondFile;
 	LyEditor lyEditor;
 	ScorePanel scorePanel;
 	TextPanel xmlPanel;
-	
-    //private static JPanel mainPanel;
-    //public static ImagePanel imagePanel;
-    //public  static TextPanel textPanel;
     
     public static void main(String[] args){
     	EventQueue.invokeLater(new Runnable() {	
@@ -45,7 +40,7 @@ public class AppMainWindow{
     public AppMainWindow(){
     	Logger.getGlobal().info("==================AppInitStart\n");
     	
-        mainFrame = new JFrame("Score Demo");
+        mainFrame = new JFrame("Score");//init main frame and main panel.
         mainFrame.setLayout(new BorderLayout());
         mainPanel = new JPanel();
         mainPanel.setLayout(new BorderLayout());
@@ -57,27 +52,13 @@ public class AppMainWindow{
 			e.printStackTrace();
 		}
         mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        
         initMenuBar();
-        
         mainFrame.setMinimumSize(new Dimension(800, 600));
         mainFrame.setExtendedState(JFrame.MAXIMIZED_BOTH);
-        
-        /*JTabbedPane tabbedPane = new JTabbedPane();
-
-    	textPanel = new TextPanel();
-    	tabbedPane.addTab("TEXT", textPanel);
-    	
-    	imagePanel = new ImagePanel();
-    	tabbedPane.addTab("IMAGE", imagePanel);
-   
-    	mainFrame.add(tabbedPane);*/
-       
         mainFrame.pack();
         mainFrame.setVisible(true);
         
-        
-        scorePanel = new ScorePanel(null);
+        scorePanel = new ScorePanel();//init score panel, ly editor and xml panel.
         lyEditor = new LyEditor();
         xmlPanel = new TextPanel();
     }
@@ -95,7 +76,7 @@ public class AppMainWindow{
 				int returnVal = fc.showOpenDialog(mainFrame);
 				if (returnVal == JFileChooser.APPROVE_OPTION) {
 		            File file = fc.getSelectedFile();
-		            GlobleVariable.setXmlPath(file.getAbsolutePath());
+		            GlobalVariable.setXmlPath(file.getAbsolutePath());
 		            mainPanel.removeAll();
 		            mainPanel.add(xmlPanel);
 		            xmlPanel.setText(file);
@@ -118,12 +99,11 @@ public class AppMainWindow{
 				int returnVal = fc.showOpenDialog(mainFrame);
 				if (returnVal == JFileChooser.APPROVE_OPTION) {
 		            File file = fc.getSelectedFile();
-		            GlobleVariable.setScoreDir(file.getAbsolutePath());
+		            GlobalVariable.setScoreDir(file.getAbsolutePath());//set score path.
 		            mainPanel.removeAll();
 		            mainPanel.add(scorePanel);
-		            scorePanel.showScore(file);
+		            scorePanel.showScore(file);//show sheets.
 		            mainPanel.updateUI();
-		            //imagePanel.initAndShowUI(file);
 		            Logger.getGlobal().info("Opening: " + file.getName() + ".\n");
 		        } else {
 		        	Logger.getGlobal().info("Open command cancelled by user.\n");
@@ -152,18 +132,24 @@ public class AppMainWindow{
 			}
 		});
         fileMenu.add(openly);
+
+        fileMenu.addSeparator();
+        JMenuItem savely = new JMenuItem("Save LilyPond File...");
+        fileMenu.add(savely);
+        JMenuItem saveImage = new JMenuItem("Save Sheets...");
+        fileMenu.add(saveImage);
+        JMenuItem saveMidi = new JMenuItem("Save MIDI File...");
+        fileMenu.add(saveMidi);
+        
         menuBar.add(fileMenu);
         //==============================================================Step menu
         JMenu stepMenu = new JMenu("Step");
-        JMenuItem loadStave = new JMenuItem("Load Stave...");
-        JMenuItem loadjianpu = new JMenuItem("Load Jianpu...");
         JMenuItem stave2midi = new JMenuItem("Convert Stave to MIDI");
-        JMenuItem stave2jianpu = new JMenuItem("Convert Stave to Jianpu");
         stave2midi.addActionListener(new ActionListener() {
 			
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				if(GlobleVariable.getScoreDir()!=null){
+				if(GlobalVariable.getScoreDir()!=null){//get score path from global variable.
 					Object[] possibilities = {"1", "2", "3","4"};
 					String s = (String)JOptionPane.showInputDialog(
 					                    mainFrame,
@@ -181,7 +167,7 @@ public class AppMainWindow{
 							@Override
 							protected Integer doInBackground() throws Exception {
 								// TODO Auto-generated method stub
-								new Score(GlobleVariable.getScoreDir(), num).convert2lilypond("x.ly");
+								new Score(GlobalVariable.getScoreDir(), num).convert2lilypond("x.ly");
 								return 0;
 							}
 
@@ -190,6 +176,12 @@ public class AppMainWindow{
 								// TODO Auto-generated method stub
 								super.done();
 								scorePanel.showData(new File("output"));
+								Lilyond.generate("x.ly");
+								GlobalVariable.setLilypondPath("x.ly");
+								scorePanel.showData(new File("output"));
+								scorePanel.showResult("result");
+								scorePanel.showMidiPlayer("result/x.mid");
+
 //								scorePanel.showMidiPlayer();
 								//Logger.getGlobal().info("score2ly");
 								//lyEditor.setFile(new File("x.ly"));
@@ -220,8 +212,8 @@ public class AppMainWindow{
 			
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				if(GlobleVariable.getXmlPath()!=null){
-					new XML2lyCompiler().parser(GlobleVariable.getXmlPath(), "y.ly");
+				if(GlobalVariable.getXmlPath()!=null){
+					new XML2lyCompiler().parser(GlobalVariable.getXmlPath(), "y.ly");
 					lyEditor.setFile(new File("y.ly"));
 					mainPanel.removeAll();
 					mainPanel.add(lyEditor);
@@ -229,12 +221,11 @@ public class AppMainWindow{
 				}
 			}
 		});
-        JMenuItem jian2midi = new JMenuItem("Convert Jianpu to MIDI");
         JMenuItem jian2stave = new JMenuItem("Convert Jianpu to Stave");
-        jian2midi.addActionListener(new ActionListener() {	
+        jian2stave.addActionListener(new ActionListener() {	
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				if(GlobleVariable.getScoreDir()!=null){
+				if(GlobalVariable.getScoreDir()!=null){
 					Object[] possibilities = {"1", "2", "3","4"};
 					String s = (String)JOptionPane.showInputDialog(
 					                    mainFrame,
@@ -252,7 +243,7 @@ public class AppMainWindow{
 							@Override
 							protected Integer doInBackground() throws Exception {
 								// TODO Auto-generated method stub
-								new JianScore(GlobleVariable.getScoreDir(), num).convert2ly("x.ly");
+								new JianScore(GlobalVariable.getScoreDir(), num).convert2ly("x.ly");
 								return 0;
 							}
 
@@ -260,8 +251,9 @@ public class AppMainWindow{
 							protected void done() {
 								super.done();
 								Lilyond.generate("x.ly");
+								GlobalVariable.setLilypondPath("x.ly");
 								scorePanel.showData(new File("output"));
-								scorePanel.showResult(new File("result"));
+								scorePanel.showResult("result");
 								scorePanel.showMidiPlayer("result/x.mid");
 							}
 							
@@ -272,13 +264,9 @@ public class AppMainWindow{
 			}
 		});
 
-        stepMenu.add(loadStave);
-        stepMenu.add(loadjianpu);
         stepMenu.addSeparator();
         stepMenu.add(stave2midi);
-        stepMenu.add(stave2jianpu);
         stepMenu.addSeparator();
-        stepMenu.add(jian2midi);
         stepMenu.add(jian2stave);
         stepMenu.addSeparator();
         stepMenu.add(xml2ly);
@@ -293,6 +281,9 @@ public class AppMainWindow{
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				mainPanel.removeAll();
+				if(GlobalVariable.getLilypondPath()!=null){
+					lyEditor.setFile(new File(GlobalVariable.getLilypondPath()));
+				}
 				mainPanel.add(lyEditor);
 				mainPanel.updateUI();
 				Logger.getGlobal().info("show lyEditor\n");
