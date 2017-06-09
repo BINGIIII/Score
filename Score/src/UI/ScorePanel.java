@@ -6,6 +6,8 @@ import java.io.File;
 import java.util.Vector;
 
 import javax.swing.JTabbedPane;
+import javax.xml.soap.Text;
+
 import java.awt.GridBagConstraints;
 import java.awt.BorderLayout;
 import javax.swing.JButton;
@@ -20,8 +22,10 @@ public class ScorePanel extends JPanel {
 	JTabbedPane mainPanel;
 	JTabbedPane rawPanel;//raw image.
 	JTabbedPane dataPanel;//OMR view
-	MIDIPanel midiPanel;//midi player
+	//MIDIPanel midiPanel;//midi player
 	JTabbedPane outPanel;//result panel.
+	TextPanel lyPanel;
+	TextPanel jianPanel;
 //	File rawFile;
 //	File resultFile;
 //	File dataFile;
@@ -46,9 +50,9 @@ public class ScorePanel extends JPanel {
 		}
 	}
 
-	public void showMidiPlayer(String filename){
+	/*public void showMidiPlayer(String filename){
 		midiPanel.setFile(filename);
-	}
+	}*/
 	public void showData(File file){
 		dataPanel.removeAll();
 		if(file.isDirectory()){
@@ -77,6 +81,12 @@ public class ScorePanel extends JPanel {
 			panel.showImage(file.getAbsolutePath());
 		}
 	}
+	public void showLy(File file){
+		lyPanel.setText(file);
+	}
+	public void showjian(File file){
+		lyPanel.setText(file);
+	}
 	
 	public ScorePanel() {
 		setLayout(new BorderLayout(0, 0));
@@ -84,14 +94,18 @@ public class ScorePanel extends JPanel {
 		mainPanel = new JTabbedPane(JTabbedPane.TOP);//init main tabbed panel
 		add(mainPanel, BorderLayout.CENTER);
 		
+		lyPanel = new TextPanel();
+		jianPanel = new TextPanel();
+		mainPanel.addTab("LilyPond", null, lyPanel, null);
+		mainPanel.addTab("Jianpu", null, jianPanel, null);
 		rawPanel = new JTabbedPane(JTabbedPane.TOP);//init all 4 panel
 		mainPanel.addTab("Image", null, rawPanel, null);
 		dataPanel = new JTabbedPane(JTabbedPane.TOP);
 		mainPanel.addTab("Date", null, dataPanel, "OMR data");
 		outPanel = new JTabbedPane(JTabbedPane.TOP);
 		mainPanel.addTab("Output", null, outPanel, null);
-		midiPanel = new MIDIPanel();
-		add(midiPanel, BorderLayout.EAST);
+		//midiPanel = new MIDIPanel();
+		//add(midiPanel, BorderLayout.EAST);
 	}
 
 }

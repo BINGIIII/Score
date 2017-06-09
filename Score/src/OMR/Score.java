@@ -9,6 +9,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Vector;
 
+import javax.crypto.Mac;
+
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
@@ -400,7 +402,7 @@ class Part {
 			if (i != 0 && Math.abs(barLineLoc.get(i) - barLineLoc.get(i - 1)) < OMRVraible.lineDistance*2) {
 				barLineLoc.remove(i);
 				--i;
-			} else {
+			} else {//bingii
 				Imgproc.line(sheet, new Point(barLineLoc.get(i), y), new Point(barLineLoc.get(i), y + OMRVraible.lineDistance*10),
 						new Scalar(0, 255, 0), 5);
 
@@ -508,7 +510,7 @@ class Measure {
 							// <4 note
 							Imgproc.rectangle(out, new Point(rect.x + x, rect.y + y),
 									new Point(rect.x + x + rect.width, rect.y + y + rect.height),
-									new Scalar(0, 0, 255));
+									new Scalar(0, 0, 255),2);
 							groups.add(new BeamedNote(measureImage, rect, 0, lineLocs, sheet, x, y,partID));
 
 							continue;
@@ -520,7 +522,7 @@ class Measure {
 							// 2note
 							Imgproc.rectangle(out, new Point(rect.x + x, rect.y + y),
 									new Point(rect.x + x + rect.width, rect.y + y + rect.height),
-									new Scalar(0, 0, 255));
+									new Scalar(0, 255, 0),2);
 							groups.add(new BeamedNote(measureImage, rect, 2, lineLocs, sheet, x, y,partID));
 							continue;
 						}
@@ -531,7 +533,7 @@ class Measure {
 					if (Core.minMaxLoc(matchResult).maxVal > 0.7) {
 						// 1note
 						Imgproc.rectangle(out, new Point(rect.x + x, rect.y + y),
-								new Point(rect.x + x + rect.width, rect.y + y + rect.height), new Scalar(0, 0, 255));
+								new Point(rect.x + x + rect.width, rect.y + y + rect.height), new Scalar(0, 0, 255),2);
 						groups.add(new BeamedNote(measureImage, rect, 1, lineLocs, sheet, x, y,partID));
 						continue;
 					}
@@ -693,7 +695,7 @@ class BeamedNote {
 	// music info
 	Vector<Vector<Note>> notePlaces;
 
-	public static int getPinch(Mat measureMat, Point headLoc, Vector<Integer> lineLoc) {
+	public static int getPinch(Mat measureMat, Point headLoc, Vector<Integer> lineLoc,Mat sheet,int yLoc) {
 		// warning : headLoc is measurewide.
 
 		Vector<Integer> tempLinLoc = new Vector<>();
@@ -711,6 +713,12 @@ class BeamedNote {
 		for (int i = 12; i > 0; --i) {
 			tempLinLoc.add(i, (tempLinLoc.get(i) + tempLinLoc.get(i - 1)) / 2);
 		}
+//		for(int i:tempLinLoc){
+//			Imgproc.line(sheet, new Point(0, yLoc+i), new Point(sheet.cols(), yLoc+i), new Scalar(255,0,0));
+//		}
+//		for(int i:lineLoc){
+//			Imgproc.line(sheet, new Point(0, yLoc+i), new Point(sheet.cols(), yLoc+i), new Scalar(255,0,0));
+//		}
 
 		int mindif = 100000;
 		int pinch = 20;
@@ -956,7 +964,7 @@ class BeamedNote {
 		case 0:// 4 or less.
 			Vector<Point> headLoc = getNoteHeadLoc(measureMat, position, "template/quarter.png");
 			for (Point p : headLoc) {
-				Imgproc.circle(sheet, new Point(p.x + x + position.x, p.y + position.y + y), OMRVraible.lineDistance/2, new Scalar(255, 0, 0),
+				Imgproc.circle(sheet, new Point(p.x + x + position.x, p.y + position.y + y), OMRVraible.lineDistance/2, new Scalar(0, 0, 255),
 						5);
 			}
 
@@ -989,7 +997,7 @@ class BeamedNote {
 				for (int j = 0; j < places.get(i).size(); ++j) {
 					pinch = getPinch(measureMat,
 							new Point(places.get(i).get(j).x + position.x, places.get(i).get(j).y + position.y),
-							lineLoc);
+							lineLoc,sheet,y);
 					notes.add(new Note(durations.get(i), 0, pinch,
 							new Point(places.get(i).get(j).x + position.x, places.get(i).get(j).y + position.y)));
 
@@ -1007,7 +1015,7 @@ class BeamedNote {
 			}
 			noteT = new Vector<>();
 			for (Point p : headLocWhole) {
-				pinch = getPinch(measureMat, new Point(p.x + position.x, p.y + position.y), lineLoc);
+				pinch = getPinch(measureMat, new Point(p.x + position.x, p.y + position.y), lineLoc,sheet,y);
 				noteT.add(new Note(1, 0, pinch, new Point(p.x + position.x, p.y + position.y)));
 			}
 			notePlaces.add(noteT);
@@ -1018,9 +1026,9 @@ class BeamedNote {
 
 			noteT = new Vector<>();
 			for (Point p : headLochalf) {
-				Imgproc.circle(sheet, new Point(p.x + x + position.x, p.y + position.y + y), OMRVraible.lineDistance/2, new Scalar(0, 0, 255),
+				Imgproc.circle(sheet, new Point(p.x + x + position.x, p.y + position.y + y), OMRVraible.lineDistance/2, new Scalar(0, 255,0 ),
 						5);
-				pinch = getPinch(measureMat, new Point(p.x + position.x, p.y + position.y), lineLoc);
+				pinch = getPinch(measureMat, new Point(p.x + position.x, p.y + position.y), lineLoc,sheet,y);
 				noteT.add(new Note(2, 0, pinch, new Point(p.x + position.x, p.y + position.y)));
 			}
 			notePlaces.add(noteT);

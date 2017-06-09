@@ -34,7 +34,7 @@ public class ImagePanel extends JPanel {
 	public void showImage(String name){
 		clear();
 		imagePanel.showImage(name,50);
-		//updateUI();
+		updateUI();
 		//repaint();
 	}
 	

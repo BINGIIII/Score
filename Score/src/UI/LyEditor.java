@@ -23,6 +23,9 @@ import java.util.Scanner;
 import java.util.logging.Logger;
 
 import javax.swing.JButton;
+import java.awt.BorderLayout;
+import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
 
 public class LyEditor extends JPanel {
 	
@@ -35,77 +38,18 @@ public class LyEditor extends JPanel {
 	}
 	
 	public LyEditor() {
-		GridBagLayout gridBagLayout = new GridBagLayout();
-		gridBagLayout.columnWidths = new int[]{0, 0, 0};
-		gridBagLayout.rowHeights = new int[]{0, 0};
-		gridBagLayout.columnWeights = new double[]{1.0, 1.0, Double.MIN_VALUE};
-		gridBagLayout.rowWeights = new double[]{1.0, Double.MIN_VALUE};
-		setLayout(gridBagLayout);
+		setLayout(new BorderLayout(0, 0));
+		
+		JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
+		add(tabbedPane, BorderLayout.CENTER);
 		
 		lyText = new TextPanel();
-		GridBagConstraints gbc_lyText = new GridBagConstraints();
-		gbc_lyText.insets = new Insets(0, 0, 0, 5);
-		gbc_lyText.fill = GridBagConstraints.BOTH;
-		gbc_lyText.gridx = 0;
-		gbc_lyText.gridy = 0;
-		add(lyText, gbc_lyText);
-		
-		JPanel lyRight = new JPanel();
-		GridBagConstraints gbc_lyRight = new GridBagConstraints();
-		gbc_lyRight.fill = GridBagConstraints.BOTH;
-		gbc_lyRight.gridx = 1;
-		gbc_lyRight.gridy = 0;
-		add(lyRight, gbc_lyRight);
-		GridBagLayout gbl_lyRight = new GridBagLayout();
-		gbl_lyRight.columnWidths = new int[]{0, 0};
-		gbl_lyRight.rowHeights = new int[]{0, 0, 0};
-		gbl_lyRight.columnWeights = new double[]{1.0, Double.MIN_VALUE};
-		gbl_lyRight.rowWeights = new double[]{0.0, 1.0, Double.MIN_VALUE};
-		lyRight.setLayout(gbl_lyRight);
-		
-		JButton lyGenerate = new JButton("Preview");
-		lyGenerate.addActionListener(new ActionListener() {
-			
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				
-				new SwingWorker<Integer, Integer>() {
-
-					@Override
-					protected Integer doInBackground() throws Exception {
-						// TODO Auto-generated method stub
-						PrintWriter out = null;
-						out = new PrintWriter(new File("temply.ly"));
-						out.print(lyText.getText());
-						out.close();
-						Logger.getGlobal().info("crete temp ly");
-						logic.Lilyond.generate("temply.ly");
-						Logger.getGlobal().info("create temp png");
-						return 0;
-					}
-
-					@Override
-					protected void done() {
-						super.done();
-						lyImage.showImage("result/temply.png");
-						Logger.getGlobal().info("show temp png");
-					}
-					
-				}.execute();
-			}
-		});
-		GridBagConstraints gbc_lyGenerate = new GridBagConstraints();
-		gbc_lyGenerate.insets = new Insets(0, 0, 5, 0);
-		gbc_lyGenerate.gridx = 0;
-		gbc_lyGenerate.gridy = 0;
-		lyRight.add(lyGenerate, gbc_lyGenerate);
+		tabbedPane.addTab("LilyPond", null, lyText, null);
+		//lyText.setLayout(new BorderLayout(0, 0));
 		
 		lyImage = new ImagePanel();
-		GridBagConstraints gbc_lyImage = new GridBagConstraints();
-		gbc_lyImage.fill = GridBagConstraints.BOTH;
-		gbc_lyImage.gridx = 0;
-		gbc_lyImage.gridy = 1;
-		lyRight.add(lyImage, gbc_lyImage);
+		tabbedPane.addTab("Preview", null, lyImage, null);
+		//lyImage.setLayout(new BorderLayout(0, 0));
 	}
 
 }

@@ -283,6 +283,7 @@ class JPart {
 			}
 		}
 		for (int i = 0; i < barLineLoc.size() - 1; ++i) {
+			
 			Mat measureMat = partMat.submat(0, partMat.rows(), barLineLoc.get(i), barLineLoc.get(i + 1));
 			measures.add(new JMeasure(measureMat, start, end,barLineLoc.get(i),yLoc,page));
 			Imgcodecs.imwrite("measures/img" + partMat.hashCode() + i + ".png", measureMat);

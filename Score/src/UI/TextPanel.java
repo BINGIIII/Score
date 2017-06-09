@@ -11,33 +11,26 @@ import java.io.ObjectInputStream.GetField;
 import javax.swing.JScrollPane;
 import java.awt.GridBagConstraints;
 import javax.swing.JTextArea;
+import java.awt.BorderLayout;
 
 public class TextPanel extends JPanel {
 
 	JTextArea textArea;
 	public TextPanel() {
-		GridBagLayout gridBagLayout = new GridBagLayout();
-		gridBagLayout.columnWidths = new int[]{0, 0};
-		gridBagLayout.rowHeights = new int[]{0, 0};
-		gridBagLayout.columnWeights = new double[]{1.0, Double.MIN_VALUE};
-		gridBagLayout.rowWeights = new double[]{1.0, Double.MIN_VALUE};
-		setLayout(gridBagLayout);
+		setLayout(new BorderLayout(0, 0));
 		
 		JScrollPane scrollPane = new JScrollPane();
-		GridBagConstraints gbc_scrollPane = new GridBagConstraints();
-		gbc_scrollPane.fill = GridBagConstraints.BOTH;
-		gbc_scrollPane.gridx = 0;
-		gbc_scrollPane.gridy = 0;
-		add(scrollPane, gbc_scrollPane);
+		add(scrollPane);
 		
 		textArea = new JTextArea();
 		scrollPane.setViewportView(textArea);
 	}
 	public void setText(File file){
 		try {
-			textArea.read(new BufferedReader(new FileReader(file)), null);
+			BufferedReader br = new BufferedReader(new FileReader(file));
+			textArea.read(br, null);
+			br.close();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
