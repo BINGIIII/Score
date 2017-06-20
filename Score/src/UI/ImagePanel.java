@@ -1,6 +1,10 @@
 package UI;
 
 import javax.imageio.ImageIO;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import java.awt.GridBagLayout;
 import java.awt.Image;
@@ -9,11 +13,13 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.channels.ShutdownChannelGroupException;
 import java.util.Calendar;
+import java.util.logging.Logger;
 
 import javax.swing.JScrollPane;
 import java.awt.GridBagConstraints;
 import java.awt.Canvas;
 import java.awt.Dimension;
+import java.awt.Frame;
 import java.awt.Graphics;
 import javax.swing.JSlider;
 import javax.swing.SwingConstants;
@@ -21,6 +27,10 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import java.awt.Insets;
+import java.awt.MenuBar;
+import java.awt.datatransfer.StringSelection;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 public class ImagePanel extends JPanel {
 	MyImagePanel imagePanel;
@@ -28,6 +38,35 @@ public class ImagePanel extends JPanel {
 	/**
 	 * Create the panel.
 	 */
+	public static void main(String[] args){
+		JFrame frame = new JFrame();
+		ImagePanel imagePanel = new ImagePanel();
+		frame.add(imagePanel);
+		JMenuItem oimgMenuItem = new JMenuItem("´ò¿ªÀÖÆ×...");
+		JMenuBar menuBar = new JMenuBar();
+		oimgMenuItem.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				final JFileChooser fc = new JFileChooser();
+				fc.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+				fc.setCurrentDirectory(new File(System.getProperty("user.dir")));
+				int returnVal = fc.showOpenDialog(frame);
+				if (returnVal == JFileChooser.APPROVE_OPTION) {
+					File file = fc.getSelectedFile();
+					imagePanel.showImage(file.getAbsolutePath());
+				} else {
+					Logger.getGlobal().info("Open command cancelled by user.\n");
+				}
+			}
+		});
+		menuBar.add(oimgMenuItem);
+		frame.setJMenuBar(menuBar);
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		
+		frame.pack();
+		frame.setVisible(true);
+	}
 	public void clear(){
 		imagePanel.clear();
 	}

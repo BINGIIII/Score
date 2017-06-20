@@ -9,9 +9,11 @@ import javax.swing.*;
 import javax.swing.colorchooser.ColorChooserComponentFactory;
 
 import org.apache.commons.io.FileUtils;
+import org.python.antlr.ast.Global;
 
 import OMR.JianScore;
 import OMR.Score;
+import logic.Compiler;
 import logic.Lilyond;
 import logic.XML2lyCompiler;
 
@@ -24,6 +26,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.nio.channels.NonWritableChannelException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -82,7 +85,7 @@ public class AppMainWindow {
 		menuBar = new JMenuBar();
 		// ==============================================================File
 		// menu
-		JMenu fileMenu = new JMenu("Open");// file menu.
+		JMenu fileMenu = new JMenu("文件");// file menu.
 		JMenuItem omxmlMenuItem = new JMenuItem("Open MusicXML...");
 		omxmlMenuItem.addActionListener(new ActionListener() {
 
@@ -105,7 +108,7 @@ public class AppMainWindow {
 				}
 			}
 		});
-		JMenuItem oimgMenuItem = new JMenuItem("Open Sheets...");
+		JMenuItem oimgMenuItem = new JMenuItem("打开乐谱...");
 		oimgMenuItem.addActionListener(new ActionListener() {
 
 			@Override
@@ -130,7 +133,7 @@ public class AppMainWindow {
 			}
 		});
 		fileMenu.add(oimgMenuItem);
-		fileMenu.add(omxmlMenuItem);
+//		fileMenu.add(omxmlMenuItem);
 
 		JMenuItem openly = new JMenuItem("Open Lilypond File...");
 		openly.addActionListener(new ActionListener() {
@@ -150,10 +153,55 @@ public class AppMainWindow {
 				}
 			}
 		});
-		fileMenu.add(openly);
+//		fileMenu.add(openly);
+		JMenuItem svly = new JMenuItem("保存");
+		svly.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				new SwingWorker<Integer, Integer>() {
 
+					@Override
+					protected Integer doInBackground() throws Exception {
+						try{
+							if(GlobalVariable.getLilypondPath()!=null){
+						    PrintWriter writer = new PrintWriter(GlobalVariable.getLilypondPath(), "UTF-8");
+						    writer.write(scorePanel.getly());
+						    writer.close();}else {
+						    	GlobalVariable.setLilypondPath("ly.ly");
+						    	PrintWriter writer = new PrintWriter("ly.ly", "UTF-8");
+							    writer.write(scorePanel.getly());
+							    writer.close();
+							}
+						    if(GlobalVariable.getJianputextPath()!=null){
+						    PrintWriter writer = new PrintWriter(GlobalVariable.getJianputextPath(), "UTF-8");
+						    writer.write(scorePanel.getjian());
+						    writer.close();
+						    }else{
+						    	GlobalVariable.setJianputextPath("jian.txt");
+						    	PrintWriter writer = new PrintWriter("jian.txt", "UTF-8");
+							    writer.write(scorePanel.getjian());
+							    writer.close();
+						    }
+						} catch (IOException e) {
+						   // do something
+						}
+						return 0;
+					}
+
+					@Override
+					protected void done() {
+						super.done();
+					}
+
+				}.execute();
+				
+				
+			}
+		});
+		fileMenu.add(svly);
 		fileMenu.addSeparator();
-		JMenuItem savely = new JMenuItem("Save LilyPond File...");
+		JMenuItem savely = new JMenuItem("导出LilyPond文件...");
 		savely.addActionListener(new ActionListener() {
 
 			@Override
@@ -173,7 +221,7 @@ public class AppMainWindow {
 			}
 		});
 		fileMenu.add(savely);
-		JMenuItem saveImage = new JMenuItem("Save Sheets...");
+		JMenuItem saveImage = new JMenuItem("导出乐谱...");
 		saveImage.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -195,7 +243,7 @@ public class AppMainWindow {
 			}
 		});
 		fileMenu.add(saveImage);
-		JMenuItem saveMidi = new JMenuItem("Save MIDI File...");
+		JMenuItem saveMidi = new JMenuItem("导出MIDI文件...");
 		saveMidi.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -220,8 +268,8 @@ public class AppMainWindow {
 		// ==============================================================Step
 		// menu
 		//
-		JMenu stepMenu = new JMenu("Step");
-		JMenuItem stave2ly = new JMenuItem("Convert Stave to LilyPond");// for
+		JMenu stepMenu = new JMenu("转换");
+		JMenuItem stave2ly = new JMenuItem("五线谱转LilyPond");// for
 																		// play
 		stave2ly.addActionListener(new ActionListener() {
 			@Override
@@ -232,17 +280,41 @@ public class AppMainWindow {
 				if (GlobalVariable.getScoreDir() != null) {// get score path
 					// from global
 					// variable.
-					Object[] possibilities = { "1", "2", "3", "4" };
+					Object[] possibilities = { "1 C", "2 C", "1 2/4", "2 2/4" };
 					String s = (String) JOptionPane.showInputDialog(mainFrame, "Part Number :", "Customized Dialog",
 							JOptionPane.PLAIN_MESSAGE, null, possibilities, "1");
 					if (s != null) {
-						int num = Integer.parseInt(s);
+						int num = 0;
+
+						switch (s) {
+						case "1 C":
+							num= 1;
+							GlobalVariable.setBeats(1);
+							break;
+						case "2 C":
+							num= 2;
+							GlobalVariable.setBeats(1);
+							break;
+						case "1 2/4":
+							num= 1;
+							GlobalVariable.setBeats(2);
+							break;
+						case "2 2/4":
+							num= 2;
+							GlobalVariable.setBeats(2);
+							break;
+
+						default:
+							break;
+						}
+						int temp =num; 
+						GlobalVariable.setPartNum(num);
 
 						new SwingWorker<Integer, Integer>() {
 
 							@Override
 							protected Integer doInBackground() throws Exception {
-								new Score(GlobalVariable.getScoreDir(), num).convert2lilypond("x.ly");
+								new Score(GlobalVariable.getScoreDir(),temp).convert2lilypond("x.ly");
 								return 0;
 							}
 
@@ -252,7 +324,7 @@ public class AppMainWindow {
 								//scorePanel.showData(new File("output"));
 								GlobalVariable.setLilypondPath("x.ly");
 								scorePanel.showLy(new File("x.ly"));
-								//scorePanel.showData(new File("output"));
+								scorePanel.showData(new File("output"));
 								//scorePanel.showResult("result");
 							}
 
@@ -263,7 +335,7 @@ public class AppMainWindow {
 		});
 		stepMenu.add(stave2ly);
 
-		JMenuItem ly2midi = new JMenuItem("Convert LilyPond File to MIDI File");// get
+		JMenuItem ly2midi = new JMenuItem("LilyPond转MIDI");// get
 																				// ly
 																				// from
 																				// mem
@@ -290,6 +362,7 @@ public class AppMainWindow {
 						protected void done() {
 							super.done();
 							GlobalVariable.setMidiPath("result/x.mid");
+							scorePanel.showData(new File("output"));
 						}
 					}.execute();
 
@@ -298,8 +371,8 @@ public class AppMainWindow {
 		});
 		stepMenu.add(ly2midi);
 
-		JMenuItem ly2stave = new JMenuItem("Convert LilyPond to Stave");
-		JMenuItem stave2jianputext = new JMenuItem("Convert Stave to Jianpu Text");
+		JMenuItem ly2stave = new JMenuItem("LilyPond转乐谱");
+		
 		ly2stave.addActionListener(new ActionListener() {// get stave from
 															// disk,set jianpu
 															// path
@@ -326,19 +399,98 @@ public class AppMainWindow {
 			}
 		});
 
-		JMenuItem jianputext2ly = new JMenuItem("Convert Jianpu text to LilyPond File");
-		jianputext2ly.addActionListener(new ActionListener() {// get jianpu from
-																// mem or
-																// disk,set lily
-																// path and lily
-																// mem
+		JMenuItem stave2jianputext = new JMenuItem("五线谱转简谱文本");
+		stave2jianputext.addActionListener(new ActionListener() {
+			
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				if (GlobalVariable.getScoreDir() != null) {// get score path
+					// from global
+					// variable.
+					Object[] possibilities = { "1 C", "2 C", "1 2/4", "2 2/4" };
+					String s = (String) JOptionPane.showInputDialog(mainFrame, "Part Number :", "Customized Dialog",
+							JOptionPane.PLAIN_MESSAGE, null, possibilities, "1");
+					if (s != null) {
+						int num = 0;
 
+						switch (s) {
+						case "1 C":
+							num= 1;
+							GlobalVariable.setBeats(1);
+							break;
+						case "2 C":
+							num= 2;
+							GlobalVariable.setBeats(1);
+							break;
+						case "1 2/4":
+							num= 1;
+							GlobalVariable.setBeats(2);
+							break;
+						case "2 2/4":
+							num= 2;
+							GlobalVariable.setBeats(2);
+							break;
+
+						default:
+							break;
+						}
+						int temp =num; 
+						GlobalVariable.setPartNum(num);
+
+						new SwingWorker<Integer, Integer>() {
+
+							@Override
+							protected Integer doInBackground() throws Exception {
+								new Score(GlobalVariable.getScoreDir(),temp).convert2jianpu("x.txt");
+								return 0;
+							}
+
+							@Override
+							protected void done() {
+								super.done();
+								//scorePanel.showData(new File("output"));
+								GlobalVariable.setJianputextPath("x.txt");
+								scorePanel.showjian(new File("x.txt"));
+								scorePanel.showData(new File("output"));
+								//scorePanel.showData(new File("output"));
+								//scorePanel.showResult("result");
+							}
+
+						}.execute();
+					}
+				}
+				
+			}
+		});
+		JMenuItem jianputext2ly = new JMenuItem("简谱文本转LilyPond");
+		jianputext2ly.addActionListener(new ActionListener() {// get jianpu frommem ordisk,set lilypath and lily mem
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				//
+				
+				new SwingWorker<Integer, Integer>() {
+
+					@Override
+					protected Integer doInBackground() throws Exception {
+						logic.Compiler.jianpu2ly(GlobalVariable.getJianputextPath(), "x.ly");
+				
+						return 0;
+					}
+
+					@Override
+					protected void done() {
+						super.done();
+						GlobalVariable.setLilypondPath("x.ly");
+						scorePanel.showLy(new File(GlobalVariable.getLilypondPath()));
+						//scorePanel.showData(new File("output"));
+						//scorePanel.showResult("result");
+					}
+
+				}.execute();
 			}
 		});
 
-		JMenuItem jianpu2ly = new JMenuItem("Convert Jianpu Image to LilyPond File");
+		JMenuItem jianpu2ly = new JMenuItem("简谱转LilyPond");
 		jianpu2ly.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {// get image from
@@ -362,6 +514,7 @@ public class AppMainWindow {
 							protected void done() {
 								super.done();
 								scorePanel.showLy(new File("x.ly"));
+								scorePanel.showData(new File("output"));
 							}
 						}.execute();
 					}
@@ -373,8 +526,8 @@ public class AppMainWindow {
 		stepMenu.add(stave2jianputext);
 		stepMenu.add(jianputext2ly);
 		stepMenu.add(jianpu2ly);
-		stepMenu.addSeparator();
-		JMenuItem stave2midi = new JMenuItem("Convert Stave to MIDI");
+		//stepMenu.addSeparator();
+		JMenuItem stave2midi = new JMenuItem("五线谱转MIDI");
 		stave2midi.addActionListener(new ActionListener() {
 
 			@Override
@@ -426,7 +579,7 @@ public class AppMainWindow {
 				}
 			}
 		});
-		JMenuItem jian2stave = new JMenuItem("Convert Jianpu to Stave");
+		JMenuItem jian2stave = new JMenuItem("简谱转五线谱");
 		jian2stave.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -463,15 +616,15 @@ public class AppMainWindow {
 			}
 		});
 
-		stepMenu.add(stave2midi);
-		stepMenu.add(jian2stave);
-		stepMenu.add(xml2ly);
+		//stepMenu.add(stave2midi);
+		//stepMenu.add(jian2stave);
+		//stepMenu.add(xml2ly);
 
 		menuBar.add(stepMenu);
 		// ==============================================================View
 		// menu
-		JMenu viewMenu = new JMenu("View");
-		JMenuItem showLyEditor = new JMenuItem("Show Lilypond Edior");
+		JMenu viewMenu = new JMenu("视图");
+		JMenuItem showLyEditor = new JMenuItem("打开Lilypond编辑器");
 		showLyEditor.addActionListener(new ActionListener() {
 
 			@Override
@@ -487,7 +640,7 @@ public class AppMainWindow {
 		});
 		viewMenu.add(showLyEditor);
 
-		JMenuItem showScore = new JMenuItem("Show Score View");
+		JMenuItem showScore = new JMenuItem("打开乐谱视图");
 		showScore.addActionListener(new ActionListener() {
 
 			@Override
@@ -511,13 +664,13 @@ public class AppMainWindow {
 				Logger.getGlobal().info("show xmlPanel\n");
 			}
 		});
-		viewMenu.add(xmlView);
+//		viewMenu.add(xmlView);
 
 		menuBar.add(viewMenu);
 		// ==============================================================play
 		// menu
-		JMenu playMenu = new JMenu("Play");
-		JMenuItem play = new JMenuItem("Play");
+		JMenu playMenu = new JMenu("播放");
+		JMenuItem play = new JMenuItem("播放");
 		play.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -551,7 +704,7 @@ public class AppMainWindow {
 			}
 		});
 
-		JMenuItem pause = new JMenuItem("Pause");
+		JMenuItem pause = new JMenuItem("暂停");
 		pause.addActionListener(new ActionListener() {
 
 			@Override
@@ -562,7 +715,7 @@ public class AppMainWindow {
 				}
 			}
 		});
-		JMenuItem stop = new JMenuItem("Stop");
+		JMenuItem stop = new JMenuItem("停止");
 		stop.addActionListener(new ActionListener() {
 
 			@Override
@@ -580,8 +733,8 @@ public class AppMainWindow {
 		menuBar.add(playMenu);
 		// ==============================================================Help
 		// menu
-		JMenu helpMenu = new JMenu("Help");
-		JMenuItem settingMenuItem = new JMenuItem("Setting");
+		JMenu helpMenu = new JMenu("帮助");
+		JMenuItem settingMenuItem = new JMenuItem("设置");
 		settingMenuItem.addActionListener(new ActionListener() {
 
 			@Override

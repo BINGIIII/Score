@@ -303,7 +303,7 @@ public class ImageProcessor {
 			
 			if (vector.get(i, 0)[0] < threshold) {// 1 is line
 				for (int j = 0; j < mat.cols(); ++j) {
-					if (!(Math.abs(mat.get(i - 3, j)[0]) < 5 || Math.abs(mat.get(i + 3, j)[0]) < 5)) {
+					if (!(Math.abs(mat.get(i - 4, j)[0]) < 5 || Math.abs(mat.get(i + 4, j)[0]) < 5)) {
 						mat.put(i, j, white);
 					}
 				}

@@ -9,6 +9,9 @@ public class GlobalVariable {
 	static String xmlPath;
 	static String outDir;
 	static String midiPath;
+	static int beats;
+	static String jianputextPath;
+	
 
 	public static String getLilypondPath() {
 		return lilypondPath;
@@ -56,5 +59,21 @@ public class GlobalVariable {
 
 	public static void setPartNum(int partNum) {
 		GlobalVariable.partNum = partNum;
+	}
+
+	public static int getBeats() {
+		return beats;
+	}
+
+	public static void setBeats(int beats) {
+		GlobalVariable.beats = beats;
+	}
+
+	public static String getJianputextPath() {
+		return jianputextPath;
+	}
+
+	public static void setJianputextPath(String jianputextPath) {
+		GlobalVariable.jianputextPath = jianputextPath;
 	}
 }

@@ -31,9 +31,11 @@ public class JianScore {
 		}
 		out.println("1=C");
 		out.println("4/4");
+		int count =0;
 		for(JPart part:parts){
 			for(JMeasure measure:part.measures){
 				for(JNote note:measure.notes){
+					count++;
 					switch (note.duration) {
 					case 8:
 						out.print("q");
@@ -75,6 +77,7 @@ public class JianScore {
 			}//measure
 		}//part
 		out.close();
+		//jSystem.out.println("notes count: " + count);
 
 	}
 	public static void main(String[] args) {
@@ -83,6 +86,7 @@ public class JianScore {
 	}
 
 	public void convert2ly(String outName){
+		int count = 0;
 		PrintWriter out = null;
 		try {
 			out = new PrintWriter(new FileWriter(outName));
@@ -99,6 +103,7 @@ public class JianScore {
 			out.println("\\tempo 4=96 ");
 			for(JMeasure measure:part.measures){
 				for(JNote note:measure.notes){
+					count++;
 					out.print(map[note.pinchStep]);
 					if(note.pinchStep!=0){
 						note.pinchOctave+=1;
@@ -121,6 +126,7 @@ public class JianScore {
 		String string = "\\score { \n << \n \\new PianoStaff << \n\\set PianoStaff.instrumentName = \"Piano\"\n\\context Staff = \"1\" << \n\\context Voice = \"PartPzero\" {\\Partzero }\n >> \\context Staff = \"2\" <<\n \\context Voice = \"Partone\" { \\Partone }  >> >>  >> \\layout {} \\midi {} }";
 		out.print(string);
 		out.close();
+		System.out.println("count : "+count);
 	}
 	public JianScore(String dirName, int partNum) {
 		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
@@ -282,8 +288,10 @@ class JPart {
 				--i;
 			}
 		}
+		for(int i=0;i<barLineLoc.size();++i){//tag
+			Imgproc.line(page, new Point(barLineLoc.get(i),start+yLoc), new Point(barLineLoc.get(i),end+yLoc), new Scalar(0,0,255),10);
+		}
 		for (int i = 0; i < barLineLoc.size() - 1; ++i) {
-			
 			Mat measureMat = partMat.submat(0, partMat.rows(), barLineLoc.get(i), barLineLoc.get(i + 1));
 			measures.add(new JMeasure(measureMat, start, end,barLineLoc.get(i),yLoc,page));
 			Imgcodecs.imwrite("measures/img" + partMat.hashCode() + i + ".png", measureMat);

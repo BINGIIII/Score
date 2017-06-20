@@ -30,7 +30,12 @@ public class ScorePanel extends JPanel {
 //	File resultFile;
 //	File dataFile;
 //	File midiFile;
-
+	public String  getly(){
+		return lyPanel.getText();
+	}
+	public String getjian(){
+		return jianPanel.getText();
+	}
 	public void showResult(String path){
 		File file = new File(path);
 		outPanel.removeAll();
@@ -85,7 +90,7 @@ public class ScorePanel extends JPanel {
 		lyPanel.setText(file);
 	}
 	public void showjian(File file){
-		lyPanel.setText(file);
+		jianPanel.setText(file);
 	}
 	
 	public ScorePanel() {
@@ -97,13 +102,13 @@ public class ScorePanel extends JPanel {
 		lyPanel = new TextPanel();
 		jianPanel = new TextPanel();
 		mainPanel.addTab("LilyPond", null, lyPanel, null);
-		mainPanel.addTab("Jianpu", null, jianPanel, null);
+		mainPanel.addTab("简谱文本", null, jianPanel, null);
 		rawPanel = new JTabbedPane(JTabbedPane.TOP);//init all 4 panel
-		mainPanel.addTab("Image", null, rawPanel, null);
+		mainPanel.addTab("乐谱", null, rawPanel, null);
 		dataPanel = new JTabbedPane(JTabbedPane.TOP);
-		mainPanel.addTab("Date", null, dataPanel, "OMR data");
+		mainPanel.addTab("数据", null, dataPanel, "OMR data");
 		outPanel = new JTabbedPane(JTabbedPane.TOP);
-		mainPanel.addTab("Output", null, outPanel, null);
+		mainPanel.addTab("输出", null, outPanel, null);
 		//midiPanel = new MIDIPanel();
 		//add(midiPanel, BorderLayout.EAST);
 	}

@@ -16,7 +16,7 @@ public class Lilyond {
 				new File("result/" + fName).delete();
 			}
 			Process process = Runtime.getRuntime()
-					.exec('\"' + lilyponddir + "\\lilypond\" --png -dresolution=400 -o result " + inputfile);
+					.exec('\"' + lilyponddir + "\\lilypond\" --png -dresolution=200 -o result " + inputfile);
 			BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
 			while ((reader.readLine()) != null) {
 			}

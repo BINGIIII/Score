@@ -1,0 +1,24 @@
+//终结符：标签，token
+//非终结符：方括号
+
+[score-partwise] => <score-partwise>[header] [part]+ </score-partwise>
+	[part] => <part> [measure]+ </part>
+		[measure] => <measure> [attributes]? [note]+ </measure>
+			[attributes] => [division][key][time][clef]
+				[division] => <division> number <／division>
+				[key] => <key>[fifth][mode]</key>
+					[fifths] => <fifths>0</fifths>
+          			[mode] => <mode>major</mode>
+				[time] => <time> [beats][beats-type] </time>
+					[beats] => <beats>2</beats>
+          			[beat-type] => <beat-type>4</beat-type>
+				[clef] => <clef>[sign][line]</clef>
+					[sign] => <sign>G</sign>
+					[line] => <line>2</line>
+			[note] => <note>[pinch][duration][type]</note>
+				[pinch]	=> <pinch>[step][alter]?[octave]</pinch>
+					[step] => <step>A</step>
+					[alter] => <alter>1</alter>
+					[octave] => <octave>4</octave>
+				[duration] => <duration>4</duration>
+				[type] => <type>eighth</type>

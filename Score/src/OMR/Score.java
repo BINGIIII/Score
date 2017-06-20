@@ -20,12 +20,192 @@ import org.opencv.core.Scalar;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
+import UI.GlobalVariable;
+
 
 
 public class Score {
 	Vector<Part> parts;
 	public static void main(String[] args){
-		new Score("canon", 2).convert2lilypond("x.ly");
+		//new Score("canon", 2).convert2lilypond("x.ly");
+		new Score("Echigo-Jishi", 1).convert2jianpu("x.txt");
+		logic.Compiler.jianpu2ly("x.txt", "x.ly");
+	}
+
+	public void convert2jianpu(String outName){
+		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+
+		PrintWriter out = null;
+
+		try {
+			out = new PrintWriter(new FileWriter(outName));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		int number = 0;
+		if(GlobalVariable.getBeats()==1){
+			number = 32;
+		}else {
+			number = 16;
+		}
+		number = 16;
+		int countt =0;
+		out.println("2/4");
+		for(int ii=0;ii<parts.size();++ii){//start of part
+			Part part = parts.get(ii);
+
+			for (int i = 0; i < part.getMeasures().size(); ++i) {//start of measure
+
+				int time = 0;// 32/32
+				Measure measure = part.getMeasures().get(i);
+				StringBuilder builder = new StringBuilder();//build the output of measure
+				for (BeamedNote group : measure.getNoteGroups()) {//start of note group
+					for (Vector<Note> notes : group.getNotes()) {//start of notes, in jianpu, size is 1
+						int duration = 0;
+						boolean first = true;
+						for (Note note : notes) {//start of note, size is 1
+							countt++;
+							int pitch = note.getPinchStep();
+							duration = note.getDuration();
+							switch (duration) {//duration, 1 2 4 8 16 32 64 
+							case 8:
+								builder.append("q");
+								break;
+							case 16:
+								builder.append("s");
+								break;
+							case 32:
+								builder.append("d");
+								break;
+							case 64:
+								builder.append("h");
+								break;
+							default:
+								break;
+							}
+							if (!group.isRest) {
+								int step = 0;
+								int dotnum = 0;
+								//if (pitch >= 0) {
+								int kk = 0;
+								while(pitch<0){
+									pitch+=7;
+									++kk;
+								}
+									dotnum = pitch / 7 + 1 -kk;
+									step = pitch % 7;
+								
+								builder.append(step+1);//step, 1 2 3 4 5 6 7
+								if (dotnum >= 0) {
+									for (int j = 0; j < dotnum; ++j) {
+										builder.append('\'');
+									}
+								} else {
+									for (int j = 0; j < -dotnum; ++j) {
+										builder.append(',');
+									}
+								}
+								if (notes.size() == 1) {
+									time += 32 / note.getDuration();
+									int sTime = note.getDuration();
+
+									for (int j = 0; j < note.dot; ++j) {//dot
+										builder.append('.');
+										sTime *= 2;
+										time += 32 / sTime;
+									}
+									builder.append(" ");
+								} 
+								
+								
+							} else {//rest
+								
+								int sTime = note.getDuration();
+								builder.append(0);
+								time += 32 / sTime;
+								for (int j = 0; j < note.dot; ++j) {//dot
+									builder.append('.');
+									sTime *= 2;
+									time += 32 / sTime;
+								}
+								builder.append(" ");
+							}
+							switch (note.duration) {
+							case 1:
+								builder.append(" - - - ");
+								break;
+							case 2:
+								builder.append(" - ");
+								break;
+							default:
+								break;
+							}
+
+						}//end of note
+					}//end of notes
+
+				}//end of note group
+				//count time!!!!!!!!!!!!!
+				
+				if (time == number) {//ok, print
+					out.print(builder.toString());
+					//builder.append("[Y " + time + "]");
+				} else if(time<number){//less, add
+					if(32%(32-time)!=0){
+						int count = 32-time;
+						while(count>1){
+							count-=2;
+							builder.append("s0 ");
+						}
+						if(count==1){
+							builder.append("d0 ");
+						}
+					}else {
+						int ff = 32/(32-time);
+						switch (ff) {
+						case 1:
+							builder.append("0 - - - ");
+							break;
+						case 2:
+							builder.append("0 - ");
+							break;
+						case 4:
+							builder.append("0 ");
+							break;
+						case 8:
+							builder.append("q0 ");
+							break;
+						case 16:
+							builder.append("s0 ");
+							break;
+						case 32:
+							builder.append("d0 ");
+							break;
+						case 64:
+							builder.append("h0 ");
+							break;
+						default:
+						
+							
+							break;
+						}
+					}
+					
+					out.print(builder.toString());
+//					builder.append("[N " + time + "]");
+				}else {
+					if(number==32){
+					out.print("0 - - - ");}
+					else {
+						out.print("0 - ");
+					}
+				}
+				//end of measure
+			out.println();
+			}
+		}
+		System.out.println(countt);
+		out.close();
 	}
 
 	public void convert2lilypond(String outName) {
@@ -38,7 +218,7 @@ public class Score {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
+		int countt =0;
 //		out.print("{ << ");
 		final String[] numMap = {"zero","one","two","three"};
 		final String[] clefMap = {"treble","bass"};
@@ -48,8 +228,12 @@ public class Score {
 
 //			out.print("\\clef treble ");
 //			out.print("\\time 2/4 ");
+			
 			out.println("Part"+numMap[ii]+"={");
-			out.print("\\clef \""+clefMap[ii]+"\"");
+			out.print("\\clef \""+clefMap[ii]+"\" ");
+			if(GlobalVariable.getBeats()==2){
+				out.print("\\time 2/4 ");
+			}
 			out.println("\\tempo 4=96 ");
 
 			for (int i = 0; i < part.getMeasures().size(); ++i) {
@@ -66,6 +250,7 @@ public class Score {
 						int duration = 0;
 						boolean first = true;
 						for (Note note : notes) {
+							countt++;
 							int pitch = note.getPinchStep();
 
 							if (!group.isRest) {
@@ -172,10 +357,16 @@ public class Score {
 					}
 
 				}
-				if (time == 32) {
+				int number = 0;
+				if(GlobalVariable.getBeats()==1){
+					number = 32;
+				}else {
+					number = 16;
+				}
+				if (time == number) {
 					out.print(builder.toString());
 					//builder.append("[Y " + time + "]");
-				} else if(time<32){
+				} else if(time<number){
 					if(32%(32-time)!=0){
 						int count = 32-time;
 						while(count>1){
@@ -192,20 +383,31 @@ public class Score {
 					out.print(builder.toString());
 //					builder.append("[N " + time + "]");
 				}else {
-					out.print("r1");
+					if(number==32){
+					out.print("r1");}
+					else {
+						out.print("r2");
+					}
 				}
 				out.print(" |\n");//end of measure!!!!
 			}
 			out.println("}");//end of part!!
 		}
-		String string = "\\score { \n << \n \\new PianoStaff << \n\\set PianoStaff.instrumentName = \"Piano\"\n\\context Staff = \"1\" << \n\\context Voice = \"PartPzero\" {\\Partzero }\n >> \\context Staff = \"2\" <<\n \\context Voice = \"Partone\" { \\Partone }  >> >>  >> \\layout {} \\midi {} }";
-		out.print(string);//end of score!!
-		out.close();
-		try {
-			Runtime.getRuntime().exec("C:\\Program Files (x86)\\LilyPond\\usr\\bin\\lilypond a.ly");
-		} catch (IOException e) {
-			e.printStackTrace();
+		System.out.println(countt);
+		if(GlobalVariable.getPartNum()==2){
+			String string = "\\score { \n << \n \\new PianoStaff << \n\\set PianoStaff.instrumentName = \"Piano\"\n\\context Staff = \"1\" << \n\\context Voice = \"PartPzero\" {\\Partzero }\n >> \\context Staff = \"2\" <<\n \\context Voice = \"Partone\" { \\Partone }  >> >>  >> \\layout {} \\midi {} }";
+			out.print(string);//end of score!!
+		}else {
+			String string = "\\score {\\context Voice = \"PartPzero\" {\\Partzero }\n \\layout {} \\midi {} }";
+			out.print(string);//end of score!!
 		}
+
+		out.close();
+//		try {
+//			Runtime.getRuntime().exec("C:\\Program Files (x86)\\LilyPond\\usr\\bin\\lilypond a.ly");
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		}
 	}
 
 	public Score(String dirName, int partNum) {
